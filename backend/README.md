@@ -8,13 +8,18 @@ python -m pip freeze > requirements.txt
 ```
 
 ```
+nameing
+git remote add pro git@heroku.com:YOUR_APP_NAME.git
+
 $ heroku git:remote -a pockie-api-stage
 $ heroku git:remote -a pockie-api-pro
 
-staging
-$ heroku run python app.py --app pockie-api-stage
+setting
+heroku config:set APP_SETTINGS=config.StagingConfig --remote stage
+heroku config:set APP_SETTINGS=config.ProductionConfig --remote pro
 
-production
+to check each config mode
+$ heroku run python app.py --app pockie-api-stage
 $ heroku run python app.py --app pockie-api-pro
 ```
 

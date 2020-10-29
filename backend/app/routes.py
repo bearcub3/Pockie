@@ -3,61 +3,65 @@ import requests
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db
-from app.forms import LoginForm, RegistrationForm
 from app.models import User, Finance, Income, Expense
 
 
 @app.route('/')
-def hello():
-    return "Hello World!"
+@app.route('/index')
+def index():
+    return "Hello Pockie!"
 
 
 '''
 user : creation, deletion, reception
 '''
-@app.route('/api/user', methods=['GET','POST'])
+
+
+@app.route('/api/user', methods=['GET', 'POST'])
 def user():
     errors = []
 
     if request.method == 'POST':
-        form = RegistrationForm()
-        if form.validate_on_submit():
-            body = request.get_json()
+        body = request.get_json()
 
-            if not ('first_name' in body and 'last_name' in body and 'email' in body and 'password' in body and 'participants' in body and 'joint' in body and 'currency' in body):
-                abort(422)
+        try:
+            first_name = body['first_name']
+            last_name = body['last_name']
+            email = body['email']
+            password = body['password']
+            dbpassword = body['dbpassword']
+            participants = body['participants']
+            joint = body['joint']
+            currency = body['currency']
 
-            try:
-                first_name = body['first_name']
-                last_name = body['last_name']
-                email = body['email']
-                password = body['password']
-                dbpassword = body['dbpassword']
-                participants = body['participants']
-                joint = body['joint']
-                currency = body['currency']
-                
-                user = User(first_name=first_name, last_name=last_name, email=email, joint=joint, participants=participants, currency=currency)
-                
+            duplicate = User.query.filter_by(User.email == email).first()
+
+            if duplicate is None:
+                user = User(first_name=first_name, last_name=last_name, email=email,
+                            joint=joint, participants=participants, currency=currency)
+
                 user.set_password(password)
                 user.check_password(dbpassword)
                 user.insert()
 
-                # print(user)
+            elif duplicate is not None:
+                flash('The email is already in use.')
 
-                return jsonify({
-                    'success': True,
-                }), 200
-            
-            except:
-                errors.append(
-                    "Unable to get URL. Please make sure it's valid and try again."
-                )
-                print(errors)
+            # print(user)
+
+            return jsonify({
+                'success': True,
+            }), 200
+
+        except:
+            errors.append(
+                "Unable to get URL. Please make sure it's valid and try again."
+            )
+            print(errors)
 
     elif request.method == 'GET':
         users = User.query.order_by(User.id).all()
-        
+
         if len(users) == 0:
             abort(404)
 
@@ -70,6 +74,7 @@ def user():
 
     else:
         abort(500)
+
 
 @app.route('/api/user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
@@ -85,7 +90,7 @@ def delete_user(user_id):
             'success': True,
             'id': user_id
         }), 200
-    
+
     else:
         abort(500)
 
@@ -93,16 +98,24 @@ def delete_user(user_id):
 '''
 log in & log out
 '''
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password')
-            return redirect(url_for('login'))
 
-        login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        return redirect(next_page)
-    return;
+
+@app.route('/login', methods=['POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('/'))
+
+    body = request.get_json()
+
+    email = body['email']
+    password = body['password']
+
+    user = User.query.filter_by(email=email).first()
+
+    if user is None or not user.check_password(password):
+        flash('Invalid username or password')
+        return redirect(url_for('LogIn'))
+
+    login_user(email, password)
+    next_page = request.args.get('next')
+    return redirect(next_page)
