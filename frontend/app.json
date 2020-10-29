@@ -1,0 +1,12 @@
+{
+  "name": "pockie_app",
+  "displayName": "pockie_app",
+  "expo": {
+    "name": "pockie_app",
+    "slug": "pockie_app",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  },
+}
