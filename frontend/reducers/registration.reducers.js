@@ -1,4 +1,4 @@
-import { userConstants } from '../constants'
+import { userConstants } from '../constants';
 
 export function registration(state = {}, action) {
     switch (action.type) {
@@ -11,4 +11,4 @@ export function registration(state = {}, action) {
       default:
         return state
     }
-  }
+}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text } from 'react-native';
 import { connect } from 'react-redux';
 import styled from "emotion-native-extended"
 
@@ -45,26 +45,53 @@ const ButtonText = styled.Text`
     color: ${(props) => props.color};  
 `
 
-export default function LogIn(){    
+function LogIn({ loggingIn, user, login, logout, navigation }){    
+    const [isSubmitted, setSubmission] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    const handleSubmit = () => {
+        if(email && password) {
+            navigation.navigate('profile');
+            // login(email, password);
+            // setSubmission(!isSubmitted);
+        }
+    }
+
+    // useEffect(() => {
+    //     if(loggingIn && isSubmitted) 
+    // },[loggingIn, isSubmitted])
 
     return(
         <Layout>
             <Header title="Log In" />
             <Row>
                 <Label>Email Address</Label>
-                <Input onChangeText={(text) => setEmail(text)} value={email} style={{ marginBottom: 20}} />
+                <Input onChangeText={(text) => setEmail(text)} value={email} style={{ marginBottom: 20 }} />
 
                 <Label>Password</Label>
                 <Input onChangeText={(text) => setPassword(text)} value={password} />
+
+                {user && <View><Text>{user}</Text></View>}
             </Row>
 
             <Row>
-                <Button bgcolor={colors.blue2}>
+                <Button bgcolor={colors.blue2} onPress={handleSubmit}>
                     <ButtonText color={colors.white}>LOG IN</ButtonText>
                 </Button>
             </Row>
         </Layout>
     )
 }
+
+function mapStateToProps(state) {
+    const { loggingIn, user } = state.authentication;
+    return { loggingIn, user };
+}
+
+const actionCreators = {
+    login: userActions.login,
+    logout: userActions.logout
+}
+
+export default connect(mapStateToProps, actionCreators)(LogIn);

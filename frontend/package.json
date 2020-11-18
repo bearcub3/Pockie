@@ -10,7 +10,9 @@
   "dependencies": {
     "@emotion/core": "^10.0.35",
     "@expo-google-fonts/poppins": "^0.1.0",
+    "@react-native-async-storage/async-storage": "^1.13.2",
     "@react-native-community/masked-view": "0.1.10",
+    "@react-navigation/material-bottom-tabs": "^5.3.9",
     "@react-navigation/native": "^5.8.0",
     "@react-navigation/stack": "^5.10.0",
     "emotion-native-extended": "^1.0.3-next.1",
@@ -25,6 +27,7 @@
     "react-native": "~0.62.2",
     "react-native-dotenv": "^2.4.2",
     "react-native-gesture-handler": "~1.6.0",
+    "react-native-paper": "^4.4.0",
     "react-native-reanimated": "~1.9.0",
     "react-native-safe-area-context": "3.0.2",
     "react-native-screens": "~2.9.0",

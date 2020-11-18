@@ -7,7 +7,6 @@ from app.models import User, Finance, Income, Expense
 
 
 @app.route('/')
-@app.route('/index')
 def index():
     return "Hello Pockie!"
 
@@ -15,8 +14,6 @@ def index():
 '''
 user : creation, deletion, reception
 '''
-
-
 @app.route('/api/user', methods=['GET', 'POST'])
 def user():
     errors = []
@@ -34,9 +31,16 @@ def user():
             joint = body['joint']
             currency = body['currency']
 
-            duplicate = User.query.filter_by(User.email == email).first()
+            duplicate = User.query.filter(User.email == email).first()
 
-            if duplicate is None:
+            if duplicate:
+                errors.append('The email is already in use.')
+                return jsonify({
+                    'success': False,
+                    'messages': 'The email is already in use.'
+                }), 406
+
+            elif duplicate is None:
                 user = User(first_name=first_name, last_name=last_name, email=email,
                             joint=joint, participants=participants, currency=currency)
 
@@ -44,14 +48,12 @@ def user():
                 user.check_password(dbpassword)
                 user.insert()
 
-            elif duplicate is not None:
-                flash('The email is already in use.')
+                # print(user)
 
-            # print(user)
-
-            return jsonify({
-                'success': True,
-            }), 200
+                return jsonify({
+                    'success': True,
+                    'messages': 'A new user is successfully registered.'
+                }), 200
 
         except:
             errors.append(
@@ -98,13 +100,8 @@ def delete_user(user_id):
 '''
 log in & log out
 '''
-
-
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('/'))
-
     body = request.get_json()
 
     email = body['email']
@@ -113,9 +110,22 @@ def login():
     user = User.query.filter_by(email=email).first()
 
     if user is None or not user.check_password(password):
-        flash('Invalid username or password')
-        return redirect(url_for('LogIn'))
+            return jsonify({
+                'success': False,
+                'message': 'Email or Password is not valid'
+            }), 200
 
-    login_user(email, password)
-    next_page = request.args.get('next')
-    return redirect(next_page)
+    if user:
+        login_user(user)
+        return jsonify({
+                'success': True,
+                'data': {
+                    'first_name': user.first_name,
+                    'joint': user.joint,
+                    'participants': user.participatns,
+                    'currency': user.currency
+                }
+            }), 200
+
+
+

@@ -1,6 +1,11 @@
-import { API_URL } from "@env"
+import { API_URL } from "@env";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 export const userService = {
     register,
+    login,
+    logout
 }
 
 function register(user) {
@@ -23,8 +28,41 @@ function login(email, password) {
         },
         body: JSON.stringify({ email, password })
     }
+
+    return fetch(`${API_URL}/api/login`, requestOptions)
+            .then(handleResponse)
+            .then(user => {
+                const status = user.success;
+                if(status) {
+                    setUser(user);
+                    return user
+                } else if(!status) {
+                    throw Error('No valid email or password');
+                }
+            })
 }
 
+
+
+function logout() {
+    removeUser();
+}
+
+const setUser = async (value) => {
+    try {
+        await AsyncStorage.setItem('user', JSON.stringify(value));
+    } catch(e) {
+        console.log(e);
+    }
+}
+
+const removeUser = async () => {
+    try {
+        await AsyncStorage.removeItem('user');
+    } catch(e) {
+        console.log(e);
+    }
+}
 
 function handleResponse(response) {
     return response.text()
@@ -38,7 +76,6 @@ function handleResponse(response) {
                     const error = (data && data.message) || response.statusText;
                     return Promise.reject(error)
                 }
-
                 return data
             });
 }

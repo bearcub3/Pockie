@@ -51,6 +51,7 @@ const ButtonText = styled.Text`
 
 
 function SignUp({ register, submitted, navigation }){
+    const [disabled, setDisabled] = useState(true);
     const [givenName, setGivenName] = useState('');
     const [famName, setFamName] = useState('');
     const [email, setEmail] = useState('');
@@ -59,16 +60,18 @@ function SignUp({ register, submitted, navigation }){
     const [joint, setJoint] = useState(false);
     const [currency, setCurrency] = useState(false);
 
-    console.log('submitted', submitted)
-
     useEffect(() => {
         const locale = Localization.locale;
         locale === 'en-GB' ? setCurrency(false) : setCurrency(true);
     }, [currency])
 
     useEffect(() => {
-        if(submitted) navigation.navigate('LogIn');
+        if(submitted) navigation.navigate('login');
     }, [submitted])
+
+    useEffect(() => {
+        if(givenName, famName, email, password, repassword) setDisabled(!disabled);
+    }, [givenName, famName, email, password, repassword])
 
     const handleRegisterUser = () => {
         if(givenName, famName, email, password, repassword) {
@@ -131,7 +134,7 @@ function SignUp({ register, submitted, navigation }){
             } */}
 
             <Row>
-                <Button bgcolor={colors.blue2}  onPress={() => handleRegisterUser()}>
+                <Button bgcolor={colors.blue2} disabled={disabled} onPress={() => handleRegisterUser()}>
                     <ButtonText color={colors.white}>CONFIRM</ButtonText>
                 </Button>
             </Row>

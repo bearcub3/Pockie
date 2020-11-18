@@ -62,10 +62,10 @@ export default function Intro({ navigation }){
                 <Image source={require('../assets/images/initial_context.png')} style={image} />
             </View>
             <Welcome>WELCOME TO POCKIE</Welcome>
-            <Button bgcolor={colors.blue2}  onPress={() => navigation.navigate('SignUp')}>
+            <Button bgcolor={colors.blue2}  onPress={() => navigation.navigate('signup')}>
                 <ButtonText color={colors.white}>SIGN UP</ButtonText>
             </Button>
-            <Button bgcolor={colors.blue3}  onPress={() => navigation.navigate('LogIn')}>
+            <Button bgcolor={colors.blue3}  onPress={() => navigation.navigate('login')}>
                 <ButtonText color={colors.blue1}>LOG IN</ButtonText>
             </Button>
         </Layout>
