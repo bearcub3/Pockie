@@ -37,7 +37,7 @@ function login(email, password) {
                     setUser(user);
                     return user
                 } else if(!status) {
-                    throw Error('No valid email or password');
+                    throw new Error('No valid email or password');
                 }
             })
 }

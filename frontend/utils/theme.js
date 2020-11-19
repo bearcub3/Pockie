@@ -14,4 +14,6 @@ export const colors = {
 
 export const fonts = {
     main: 'Poppins_600SemiBold',
+    normal: 'Poppins_500Medium',
+    plain: 'Roboto_400Regular'
 }

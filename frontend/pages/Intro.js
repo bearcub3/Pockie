@@ -7,9 +7,12 @@ import Layout from '../components/Layout'
 
 import {
     useFonts,
+    Poppins_500Medium,
     Poppins_600SemiBold,
     Poppins_700Bold,
-  } from '@expo-google-fonts/poppins';
+    Roboto_400Regular
+  } from '@expo-google-fonts/dev';
+
 import { AppLoading } from 'expo';
 
 
@@ -49,8 +52,10 @@ const image = {
 
 export default function Intro({ navigation }){
     let [fontsLoaded] = useFonts({
+        Poppins_500Medium,
         Poppins_600SemiBold,
-        Poppins_700Bold
+        Poppins_700Bold,
+        Roboto_400Regular
       });
     
       if(!fontsLoaded) {
