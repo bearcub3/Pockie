@@ -8,7 +8,7 @@ const Container = styled.View`
     width: 100%;
     border-radius: 10px;
     border: 1px solid ${colors.grey2};
-    margin: 15px 0;
+    margin-bottom: 15px;
     padding: 15px;
 `
 
@@ -29,7 +29,9 @@ export default function AssetBox({ category, children }) {
         <Container>
             <Your>Your</Your>
             <Title>{category}</Title>
-            {children}
+            <View style={{ margin: 0 }}>
+                {children}
+            </View>
         </Container>
     )
 }

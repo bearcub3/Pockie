@@ -12,6 +12,7 @@ import LogIn from './LogIn'
 import User from './User'
 import Status from './Status'
 import State from './State'
+import Goals from './Goals'
 
 const Stack = createStackNavigator();
 const Tab = createMaterialBottomTabNavigator();
@@ -66,6 +67,7 @@ export default function AppEntry(){
                 <Stack.Screen name="signup" component={SignUp} options={{ headerShown: false }} />
                 <Stack.Screen name="login" component={LogIn} options={{ headerShown: false }} />
                 <Stack.Screen name="profile" component={BottomTab} options={{ headerShown: false }} />
+                <Stack.Screen name="Your Saving Goals" component={Goals} />
             </Stack.Navigator>
         </NavigationContainer>     
     )

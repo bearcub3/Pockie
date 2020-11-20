@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Image } from 'react-native';
+import { Text, View, Image, ScrollView, Dimensions, TouchableHighlight } from 'react-native';
 import styled from "emotion-native-extended";
 import ToggleSwitch from 'toggle-switch-react-native'
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, fonts } from '../utils/theme';
+import { VictoryPie } from 'victory-native';
+
+import { colors, fonts, chart } from '../utils/theme';
 import Layout from '../components/Layout';
 import Todays from '../components/Todays';
 import AssetBox from '../components/AssetBox';
@@ -13,6 +15,7 @@ const ProfileHeader = styled.View`
     height: 190;
     background-color: ${colors.blue3};
     align-items: center;
+    z-index: -1;
 `
 
 const UserName = styled.Text`
@@ -20,10 +23,38 @@ const UserName = styled.Text`
     font-size: 20;
 `
 
+const PlainText = styled.Text`
+    font-family: ${fonts.normal};
+    font-size: 16;
+    color: ${colors.grey1};
+    text-align: center;
+    padding: 15px 0 0;
+`
+
+const Goals = styled.Text`
+    font-family: ${fonts.main};
+    font-size: 25;
+    color: ${colors.green};
+`
+
+const Button = styled.View`
+    flex: 1;
+    border-radius: 5px;
+    background-color: ${colors.green};
+    padding: 10px;
+    margin: 25px 0 0;
+`
+
+const ButtonText = styled.Text`
+    font-family: ${fonts.main};
+    font-size: 18;
+    text-align: center;
+    color: ${colors.white};
+`
+
 const image = {
     width: 130,
     height: 130,
-    marginTop: -120,
 }
 
 const userData = {
@@ -58,6 +89,24 @@ const userExpenseData = {
     'Etc': 3
 }
 
+// TODO: create saving model API /api/goals  'POST', 'GET'
+// mapStateToProps 
+// saving goals screen => createNativeStackNavigator
+
+const goalsData = [
+    { purpose : 'Personal',
+      amount : 600,
+      current: 260,
+      due : '6 months' // not sure about the data format
+    },
+    { purpose : 'Buying a house',
+      amount : 5000,
+      current: 1580,
+      due : '12 months' // not sure about the data format
+    },
+]
+
+
 const WaveEmoji = () => (
     <Image source={require('../assets/images/handIcon.png')} style={{ position: `absolute`, right: -50, top: -5 }} role="img" />
 )
@@ -76,10 +125,12 @@ const conversion = (value) => {
     }
 }
 
-export default function User(){
+export default function User({ navigation }){
     const [currencyChanged, setConversion] = useState(userData.currency);
+    const windowWidth = Dimensions.get('window').width;
+
     return (
-        <>
+        <ScrollView style={{ backgroundColor: `${colors.white}` }}>
             <ProfileHeader>
                 <View style={{ flex: 1, position: `absolute`, top: 40, left: -10}}>
                     <ToggleSwitch
@@ -96,12 +147,12 @@ export default function User(){
                     <Settings />
                 </View>
             </ProfileHeader>
+            <View style={{ marginTop: -70, alignItems: `center`, zIndex: -1 }} >
+                <Image source={require('../assets/images/avatar.png')} style={image} />
+                <View style={{ position: `relative` }}><UserName>{`Hello, ${userData.first_name}!`}</UserName><WaveEmoji /></View>
+            </View>
             <Layout>
-                <View style={{ marginBottom: 20, alignItems: `center`}} >
-                    <Image source={require('../assets/images/avatar.png')} style={image} />
-                    <View style={{ position: `relative` }}><UserName>{`Hello, ${userData.first_name}!`}</UserName><WaveEmoji /></View>
-                </View>
-                <View style={{ flexDirection: `row` }}>
+                <View style={{ flexDirection: `row`, marginBottom: 15 }}>
                     <View style={{ flexDirection: `column`, width: `48.5%`, marginRight: 10 }}>
                         <Todays title="Expense" amount={userFinanceData.expense} conversion={conversion(userFinanceData.expense)} />
                     </View> 
@@ -109,10 +160,42 @@ export default function User(){
                         <Todays title="Income" amount={userFinanceData.income} conversion={conversion(userFinanceData.income)} />
                     </View>
                 </View>
+                {/* spending pattern */}
                 <AssetBox category="Spending Pattern">
-                    <Text>hello</Text>
+                    <View style={{ position: `relative`, left: -35 }}>
+                        <VictoryPie
+                            colorScale={[`${chart.color1}`, `${chart.color2}`, `${chart.color5}`, `${chart.color4}`, `${chart.color6}`, `${chart.color7}`, `${chart.color3}`, `${chart.color8}`]}
+                            innerRadius={30}
+                            labelRadius={({ innerRadius }) => innerRadius + 10 }
+                            data={[
+                                { x: 'House, Bills, Taxes', y: 50 },
+                                { x: 'Grocery', y: 15 },
+                                { x: 'Shopping', y: 5 },
+                                { x: 'Entertainment', y:10 },
+                                { x: 'Transportation, Car', y: 4 },
+                                { x: 'Healthcare', y: 3 },
+                                { x: 'Personal', y: 10 },
+                                { x: 'Etc', y: 3 } 
+                            ]}
+                            labelPlacement="parallel"
+                            style={{ labels: { fill: "white", fontSize: 12 } }}
+                        />
+                    </View>
+                </AssetBox>
+                {/* saving goals */}
+                <AssetBox category="Saving Goals">
+                    <PlainText>You have <Goals>{goalsData.length}</Goals> saving goal{goalsData.length > 1 && `s`}.</PlainText>
+                    <TouchableHighlight onPress={() => {navigation.navigate('Your Saving Goals')}}>
+                        <Button>
+                            <ButtonText>SET A GOAL</ButtonText>
+                        </Button>
+                    </TouchableHighlight>
+                </AssetBox>
+                {/* finance partner */}
+                <AssetBox category="Fianace Partner">
+                  
                 </AssetBox>
             </Layout>
-        </>
+        </ScrollView>
     )
 }
