@@ -9,7 +9,7 @@ import { VictoryPie } from 'victory-native';
 import { colors, fonts, chart } from '../utils/theme';
 import Layout from '../components/Layout';
 import Todays from '../components/Todays';
-import AssetBox from '../components/AssetBox';
+import ScreenLayout from '../components/ScreenLayout';
 
 const ProfileHeader = styled.View`
     height: 190;
@@ -38,11 +38,9 @@ const Goals = styled.Text`
 `
 
 const Button = styled.View`
-    flex: 1;
     border-radius: 5px;
     background-color: ${colors.green};
     padding: 10px;
-    margin: 25px 0 0;
 `
 
 const ButtonText = styled.Text`
@@ -161,7 +159,7 @@ export default function User({ navigation }){
                     </View>
                 </View>
                 {/* spending pattern */}
-                <AssetBox category="Spending Pattern">
+                <ScreenLayout category="Spending Pattern">
                     <View style={{ position: `relative`, left: -35 }}>
                         <VictoryPie
                             colorScale={[`${chart.color1}`, `${chart.color2}`, `${chart.color5}`, `${chart.color4}`, `${chart.color6}`, `${chart.color7}`, `${chart.color3}`, `${chart.color8}`]}
@@ -181,20 +179,21 @@ export default function User({ navigation }){
                             style={{ labels: { fill: "white", fontSize: 12 } }}
                         />
                     </View>
-                </AssetBox>
+                </ScreenLayout>
                 {/* saving goals */}
-                <AssetBox category="Saving Goals">
+                <ScreenLayout category="Saving Goals">
                     <PlainText>You have <Goals>{goalsData.length}</Goals> saving goal{goalsData.length > 1 && `s`}.</PlainText>
-                    <TouchableHighlight onPress={() => {navigation.navigate('Your Saving Goals')}}>
+                    <TouchableHighlight 
+                        onPress={() => navigation.navigate('Your Saving Goals')}>
                         <Button>
                             <ButtonText>SET A GOAL</ButtonText>
                         </Button>
                     </TouchableHighlight>
-                </AssetBox>
+                </ScreenLayout>
                 {/* finance partner */}
-                <AssetBox category="Fianace Partner">
+                <ScreenLayout category="Fianace Partner">
                   
-                </AssetBox>
+                </ScreenLayout>
             </Layout>
         </ScrollView>
     )

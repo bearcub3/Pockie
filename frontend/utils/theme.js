@@ -1,3 +1,5 @@
+import styled from "emotion-native-extended";
+
 export const colors = {
     blue1: '#076eda',
     blue2: '#63a8f1',
@@ -28,3 +30,20 @@ export const chart = {
     color7: '#ffb529',
     color8: '#ffdd00'
 }
+
+export const TagBG = styled.View`
+    width: 100;
+    height: 25px;
+    border-radius: 25px;
+    background-color: ${colors.blue3};
+    justify-content: center;
+    align-items: center;
+    margin-right: 10;
+`
+
+export const TagText = styled.Text`
+    font-size: 13;
+    color: ${colors.blue1};
+    font-family: ${fonts.normal};
+    margin: 0;
+`

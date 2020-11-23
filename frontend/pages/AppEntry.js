@@ -67,7 +67,7 @@ export default function AppEntry(){
                 <Stack.Screen name="signup" component={SignUp} options={{ headerShown: false }} />
                 <Stack.Screen name="login" component={LogIn} options={{ headerShown: false }} />
                 <Stack.Screen name="profile" component={BottomTab} options={{ headerShown: false }} />
-                <Stack.Screen name="Your Saving Goals" component={Goals} />
+                <Stack.Screen name="Your Saving Goals" component={Goals} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>     
     )

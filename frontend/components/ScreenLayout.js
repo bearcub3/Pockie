@@ -24,7 +24,7 @@ const Title = styled.Text`
     letter-spacing: -0.3;
 `
 
-export default function AssetBox({ category, children }) {
+export default function ScreenLayout({ category, children }) {
     return (
         <Container>
             <Your>Your</Your>
