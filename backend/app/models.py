@@ -1,28 +1,20 @@
 from app import db
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 
-Finance = db.Table('Finance',
-                   db.Column('user_id', db.Integer, db.ForeignKey(
-                       'User.id'), primary_key=True),
-                   db.Column('income_id', db.Integer, db.ForeignKey(
-                       'Income.id'), primary_key=True),
-                   db.Column('expense_id', db.Integer, db.ForeignKey('Expense.id'), primary_key=True))
-
-
-class User(UserMixin, db.Model):
+class User(db.Model):
     __tablename__ = 'User'
-
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
+        
+    id = db.Column(db.Integer(), primary_key=True, unique=True, nullable=False)
     first_name = db.Column(db.String(32), nullable=False)
     last_name = db.Column(db.String(32), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
-    password_hash = db.Column(db.String(128), nullable=False)
     participants = db.Column(db.ARRAY(db.Integer()), nullable=True)
     joint = db.Column(db.Boolean(), default=False)
-    currency = db.Column(db.Boolean(), nullable=False)
+    currency = db.Column(db.String(3), nullable=False)
+    joined = db.Column(db.DateTime, default=datetime.utcnow())
+    expense = db.relationship('Expense', backref=db.backref('user_expense', cascade="all,delete"), lazy=True)
+    income = db.relationship('Income', backref=db.backref('user_income', cascade="all,delete"), lazy=True)
 
     def __repr__(self):
         return f'<User ID: {self.id}>'
@@ -33,15 +25,12 @@ class User(UserMixin, db.Model):
         self.email = email
         self.joint = joint
         self.currency = currency
+        self.participatns = participants
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
 
     def insert(self):
         db.session.add(self)
+        db.create_all()
         db.session.commit()
 
     def update(self):
@@ -60,24 +49,26 @@ class User(UserMixin, db.Model):
             },
             'email': self.email,
             'joint': self.joint,
-            'currency': self.currency
+            'currency': self.currency,
+            'participants': self.participants,
+            'joined': self.joined
         }
-
 
 
 class Income(db.Model):
     __tablename__ = 'Income'
 
-    id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50), nullable=False)
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    type = db.Column(db.Integer(), nullable=False)
     amount = db.Column(db.Integer(), nullable=False)
     created = db.Column(db.DateTime, default=datetime.utcnow())
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'))
 
     def __init__(self, type, amount, created):
         self.type = type
         self.amount = amount
         self.created = created
-
+    
     def __repr__(self):
         return f'<Income ID: {self.id}>'
 
@@ -85,10 +76,11 @@ class Income(db.Model):
 class Expense(db.Model):
     __tablename__ = 'Expense'
 
-    id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50), nullable=False)
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    type = db.Column(db.Integer(), nullable=False)
     amount = db.Column(db.Integer(), nullable=False)
     created = db.Column(db.DateTime, default=datetime.utcnow())
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'))
 
     def __init__(self, type, amount, created):
         self.type = type
@@ -97,3 +89,4 @@ class Expense(db.Model):
 
     def __repr__(self):
         return f'<Expense ID: {self.id}>'
+
