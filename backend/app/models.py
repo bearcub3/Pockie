@@ -4,7 +4,7 @@ from datetime import datetime
 
 class User(db.Model):
     __tablename__ = 'User'
-        
+
     id = db.Column(db.Integer(), primary_key=True, unique=True, nullable=False)
     first_name = db.Column(db.String(32), nullable=False)
     last_name = db.Column(db.String(32), nullable=False)
@@ -13,20 +13,24 @@ class User(db.Model):
     joint = db.Column(db.Boolean(), default=False)
     currency = db.Column(db.String(3), nullable=False)
     joined = db.Column(db.DateTime, default=datetime.utcnow())
-    expense = db.relationship('Expense', backref=db.backref('user_expense', cascade="all,delete"), lazy=True)
-    income = db.relationship('Income', backref=db.backref('user_income', cascade="all,delete"), lazy=True)
+    expense = db.relationship(
+        'Expense',
+        backref=db.backref('user_expense', cascade="all"), lazy=True)
+    income = db.relationship(
+        'Income',
+        backref=db.backref('user_income', cascade="all"), lazy=True)
 
     def __repr__(self):
         return f'<User ID: {self.id}>'
 
-    def __init__(self, first_name, last_name, email, joint, participants, currency):
+    def __init__(self, first_name, last_name,
+                 email, joint, participants, currency):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
         self.joint = joint
         self.currency = currency
         self.participatns = participants
-
 
     def insert(self):
         db.session.add(self)
@@ -68,7 +72,7 @@ class Income(db.Model):
         self.type = type
         self.amount = amount
         self.created = created
-    
+
     def __repr__(self):
         return f'<Income ID: {self.id}>'
 
@@ -89,4 +93,3 @@ class Expense(db.Model):
 
     def __repr__(self):
         return f'<Expense ID: {self.id}>'
-

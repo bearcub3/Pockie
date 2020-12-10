@@ -15,6 +15,40 @@
 Access Token is temporarily saved for a Udacity reviewer.
 
 
+## Roles & Permissions
+
+### Super
+
+1. read:users - getting all users' data
+2. delete:user - delete a user's data
+
+### Basic
+
+1. read:user - getting a user's own data
+2. edit:user - editing a user's own daa
+3. delete:user - delete a user's data
+
+**Regular User can sign up to join**    
+
+1. post:user - signing up
+
+
+## Installation
+
+```
+git clone git@github.com:bearcub3/Pockie.git
+cd Pockie/backend
+
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+
+export FLASK_APP=app FLASK_ENV=development
+flask run
+```
+
+
+
 ## How to run unittest
 
 `python -m unittest discover -s test`
@@ -51,8 +85,7 @@ heroku run python manage.py db upgrade --app pockie-app-stage
 nameing
 git remote add pro git@heroku.com:YOUR_APP_NAME.git
 
-$ heroku git:remote -a pockie-api-stage
-$ heroku git:remote -a pockie-api-pro
+$ heroku git:remote -a pockie-app-stage
 
 setting
 heroku config:set APP_SETTINGS=config.StagingConfig --remote stage

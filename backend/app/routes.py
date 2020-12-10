@@ -9,9 +9,12 @@ from app.auth import AuthError, requires_auth
 def index():
     return "Hello Pockie!"
 
+
 '''
-user : creation, deletion, reception
+@user : creation, deletion, reception
 '''
+
+
 @app.route('/api/user', methods=['POST'])
 def user_signup():
     errors = []
@@ -36,8 +39,9 @@ def user_signup():
             }), 406
 
         elif duplicate is None:
-            user = User(first_name=first_name, last_name=last_name, email=email,
-                        joint=joint, participants=participants, currency=currency)
+            user = User(first_name=first_name, last_name=last_name,
+                        email=email, joint=joint, participants=participants,
+                        currency=currency)
 
             user.insert()
 
@@ -46,7 +50,7 @@ def user_signup():
                 'messages': 'A new user is successfully registered.'
             }), 200
 
-    except:
+    except AuthError:
         abort(422)
 
 
@@ -54,7 +58,6 @@ def user_signup():
 @requires_auth('read:users')
 def get_users(payload):
     users = User.query.order_by(User.id).all()
-    print(users);
 
     if len(users) == 0:
         abort(404)
@@ -67,6 +70,7 @@ def get_users(payload):
 
     else:
         abort(AuthError)
+
 
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 @requires_auth('read:user')
@@ -85,6 +89,7 @@ def get_a_user(payload, user_id):
 
     else:
         abort(AuthError)
+
 
 @app.route('/api/user/<int:user_id>', methods=['PATCH'])
 @requires_auth('edit:user')
@@ -106,22 +111,22 @@ def edit_user(payload, user_id):
 
             if first_name:
                 user.first_name = first_name
-            
+
             if last_name:
                 user.last_name = last_name
 
             if email:
                 user.email = email
-            
+
             if participants:
                 user.participants = participants
-            
+
             if joint:
                 user.joint = joint
-            
+
             if currency:
                 user.currency = currency
-            
+
             user.update()
 
             return jsonify({
@@ -130,9 +135,8 @@ def edit_user(payload, user_id):
                 'user': user.format()
             }), 200
 
-        except:
+        except AuthError:
             abort(422)
-
 
 
 @app.route('/api/user/<int:user_id>', methods=['DELETE'])
@@ -158,10 +162,13 @@ def delete_user(payload, user_id):
 '''
 expense data
 TODO: authentication
-'''
+
 # @app.route('/api/expense/<int:user_id>', methods=['POST'])
 # def save_expense(user_id):
 #     expense = Finace.query.filter(Finance.c.user_id)
+
+'''
+
 
 @app.errorhandler(400)
 def handle_bad_request(error):
@@ -170,6 +177,7 @@ def handle_bad_request(error):
         'error': 400,
         'message': 'Bad request'
     }), 400
+
 
 @app.errorhandler(401)
 def not_authorized(error):
@@ -217,8 +225,8 @@ def server_error(error):
 
 
 '''
-@DONE implement error handler for AuthError
-    error handler should conform to general task above 
+implement error handler for AuthError
+    error handler should conform to general task above
 '''
 
 
@@ -228,4 +236,3 @@ def handle_auth_error(error):
         'success': False,
         'error': error.status_code,
     }), error.status_code
-

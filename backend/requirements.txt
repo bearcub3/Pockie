@@ -25,6 +25,7 @@ pep8==1.7.1
 pkce==1.0
 psycopg2-binary==2.8.6
 pyasn1==0.4.8
+pycodestyle==2.6.0
 pylint==2.6.0
 pylint-flask==0.6
 pylint-plugin-utils==0.6
