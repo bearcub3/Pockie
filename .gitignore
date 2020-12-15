@@ -1,7 +1,21 @@
 .DS_Store
 backend/.env
 backend/migrations
-frontend/.env
+frontend/pockie/.env
+
+# node.js
+#
+frontend/pockie/node_modules/
+frontend/pockie/npm-debug.log
+frontend/pockie/yarn-error.log
+
+# Android/IntelliJ
+#
+frontend/pockie/build/
+frontend/pockie/.idea
+frontend/pockie/.gradle
+local.properties
+*.iml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -60,3 +74,20 @@ docs/_build/
 
 *.DS_Store
 .vscode
+
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/
+
+*/fastlane/report.xml
+*/fastlane/Preview.html
+*/fastlane/screenshots
+
+# Bundle artifact
+*.jsbundle
+
+# CocoaPods
+/ios/Pods/
