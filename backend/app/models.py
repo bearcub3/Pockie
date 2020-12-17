@@ -1,9 +1,8 @@
 from app import db
 from datetime import datetime
 
-
-class User(db.Model):
-    __tablename__ = 'User'
+class Users(db.Model):
+    __tablename__ = 'Users'
 
     id = db.Column(db.Integer(), primary_key=True, unique=True, nullable=False)
     first_name = db.Column(db.String(32), nullable=False)
@@ -12,13 +11,14 @@ class User(db.Model):
     participants = db.Column(db.ARRAY(db.Integer()), nullable=True)
     joint = db.Column(db.Boolean(), default=False)
     currency = db.Column(db.String(3), nullable=False)
-    joined = db.Column(db.DateTime, default=datetime.utcnow())
+    joined = db.Column(db.DateTime, nullable=False,
+                       default=datetime.utcnow)
     expense = db.relationship(
-        'Expense',
-        backref=db.backref('user_expense', cascade="all"), lazy=True)
+        'Expenses',
+        backref=db.backref('Users', cascade="save-update"), lazy=True)
     income = db.relationship(
-        'Income',
-        backref=db.backref('user_income', cascade="all"), lazy=True)
+        'Incomes',
+        backref=db.backref('Users', cascade="save-update"), lazy=True)
 
     def __repr__(self):
         return f'<User ID: {self.id}>'
@@ -59,37 +59,73 @@ class User(db.Model):
         }
 
 
-class Income(db.Model):
-    __tablename__ = 'Income'
+class Incomes(db.Model):
+    __tablename__ = 'Incomes'
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     type = db.Column(db.Integer(), nullable=False)
     amount = db.Column(db.Integer(), nullable=False)
-    created = db.Column(db.DateTime, default=datetime.utcnow())
-    user_id = db.Column(db.Integer, db.ForeignKey('User.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'))
+    created = db.Column(db.DateTime, nullable=False,
+                        default=datetime.utcnow)
 
-    def __init__(self, type, amount, created):
+    def __init__(self, type, amount, user_id):
         self.type = type
         self.amount = amount
-        self.created = created
+        self.user_id = user_id
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'type': self.type,
+            'amount': self.amount,
+            'user_id': self.user_id,
+            'issued': self.created
+        }
 
     def __repr__(self):
         return f'<Income ID: {self.id}>'
 
 
-class Expense(db.Model):
-    __tablename__ = 'Expense'
+class Expenses(db.Model):
+    __tablename__ = 'Expenses'
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     type = db.Column(db.Integer(), nullable=False)
     amount = db.Column(db.Integer(), nullable=False)
-    created = db.Column(db.DateTime, default=datetime.utcnow())
-    user_id = db.Column(db.Integer, db.ForeignKey('User.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'))
+    created = db.Column(db.DateTime, nullable=False,
+                        default=datetime.utcnow)
 
-    def __init__(self, type, amount, created):
+    def __init__(self, type, amount, user_id):
         self.type = type
         self.amount = amount
-        self.created = created
+        self.user_id = user_id
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'type': self.type,
+            'amount': self.amount,
+            'user_id': self.user_id,
+            'issued': self.created
+        }
 
     def __repr__(self):
         return f'<Expense ID: {self.id}>'

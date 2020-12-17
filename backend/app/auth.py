@@ -5,10 +5,13 @@ from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 from decouple import config
+import requests
 
-AUTH0_DOMAIN = config('AUTH0_DOMAIN')
+DOMAIN = config('DOMAIN')
 ALGORITHMS = config('ALGORITHMS')
 API_AUDIENCE = config('API_AUDIENCE')
+
+public_key_cache = {}
 
 
 '''
@@ -65,7 +68,7 @@ def get_token_auth_header():
     return token
 
 
-def check_permissions(permission, payload):
+def check_permission(permission, payload):
     if 'permissions' not in payload:
         abort(400)
 
@@ -86,12 +89,40 @@ def check_permissions(permission, payload):
 '''
 
 
+def fetch_jwk_for(token=None):
+    if token is None:
+        raise NameError('token is required')
+
+    jwks_uri = urlopen(f'https://{DOMAIN}/oauth2/default/v1/keys')
+    jwks = json.loads(jwks_uri.read())
+
+    unverified_header = jwt.get_unverified_header(token)
+    key_id = None
+
+    if 'kid' in unverified_header:
+        key_id = unverified_header['kid']
+    else:
+        raise ValueError('The id_token header must contain a "kid"')
+    if key_id in public_key_cache:
+        return public_key_cache[key_id]
+
+    r = requests.get(jwks_uri)
+    jwks = r.json()
+
+    for key in jwks['keys']:
+        jwk_id = key['kid']
+        public_key_cache[jwk_id] = key
+
+    if key_id in public_key_cache:
+        return public_key_cache[key_id]
+    else:
+        raise RuntimeError("Unable to fetch public key from jwks_uri")
+
+
 def verify_decode_jwt(token):
-    # get the public key from auth0
-    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+    jsonurl = urlopen(f'https://{DOMAIN}/oauth2/default/v1/keys')
     jwks = json.loads(jsonurl.read())
 
-    # get the data in the header
     unverified_header = jwt.get_unverified_headers(token)
 
     # cchoose our key
@@ -119,7 +150,7 @@ def verify_decode_jwt(token):
                 rsa_key,
                 algorithms=ALGORITHMS,
                 audience=API_AUDIENCE,
-                issuer='https://' + AUTH0_DOMAIN + '/'
+                issuer='https://' + DOMAIN + '/oauth2/default'
             )
 
             return payload
@@ -163,8 +194,9 @@ def requires_auth(permission=''):
         def wrapper(*args, **kwargs):
             token = get_token_auth_header()
             payload = verify_decode_jwt(token)
-            check_permissions(permission, payload)
+            check_permission(permission, payload)
             return f(payload, *args, **kwargs)
 
         return wrapper
     return requires_auth_decorator
+

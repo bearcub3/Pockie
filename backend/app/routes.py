@@ -1,8 +1,18 @@
+from datetime import date, datetime, timedelta
+import calendar
+import json
+import os
+import urllib
+from sqlalchemy import and_, func
+
 from flask import Flask, request, jsonify, abort, flash, session
 
 from app import app, db
-from app.models import User, Income, Expense
-from app.auth import AuthError, requires_auth
+from app.models import Users, Incomes, Expenses
+from app.auth import AuthError, requires_auth, fetch_jwk_for
+
+# db.drop_all()
+# db.create_all()
 
 
 @app.route('/')
@@ -28,7 +38,7 @@ def user_signup():
         joint = body['joint']
         currency = body['currency']
 
-        duplicate = User.query.filter(User.email == email).first()
+        duplicate = Users.query.filter(Users.email == email).first()
 
         if duplicate:
             errors.append('The email is already in use.')
@@ -39,9 +49,9 @@ def user_signup():
             }), 406
 
         elif duplicate is None:
-            user = User(first_name=first_name, last_name=last_name,
-                        email=email, joint=joint, participants=participants,
-                        currency=currency)
+            user = Users(first_name=first_name, last_name=last_name,
+                         email=email, joint=joint, participants=participants,
+                         currency=currency)
 
             user.insert()
 
@@ -55,9 +65,9 @@ def user_signup():
 
 
 @app.route('/api/user', methods=['GET'])
-@requires_auth('read:users')
-def get_users(payload):
-    users = User.query.order_by(User.id).all()
+# @requires_auth('read:users')
+def get_users():
+    users = Users.query.order_by(Users.id).all()
 
     if len(users) == 0:
         abort(404)
@@ -73,9 +83,9 @@ def get_users(payload):
 
 
 @app.route('/api/user/<int:user_id>', methods=['GET'])
-@requires_auth('read:user')
-def get_a_user(payload, user_id):
-    user = User.query.filter(User.id == user_id).first()
+# @requires_auth('read:user')
+def get_a_user(user_id):
+    user = Users.query.filter(Users.id == user_id).first()
 
     if user is None:
         abort(404)
@@ -92,9 +102,9 @@ def get_a_user(payload, user_id):
 
 
 @app.route('/api/user/<int:user_id>', methods=['PATCH'])
-@requires_auth('edit:user')
-def edit_user(payload, user_id):
-    user = User.query.filter(User.id == user_id).one_or_none()
+# @requires_auth('edit:user')
+def edit_user(user_id):
+    user = Users.query.filter(Users.id == user_id).one_or_none()
     body = request.get_json()
 
     if user is None:
@@ -140,9 +150,9 @@ def edit_user(payload, user_id):
 
 
 @app.route('/api/user/<int:user_id>', methods=['DELETE'])
-@requires_auth('delete:user')
-def delete_user(payload, user_id):
-    user = User.query.filter(User.id == user_id).one_or_none()
+# @requires_auth('delete:user')
+def delete_user(user_id):
+    user = Users.query.filter(Users.id == user_id).one_or_none()
 
     if user is None:
         abort(404)
@@ -161,13 +171,206 @@ def delete_user(payload, user_id):
 
 '''
 expense data
-TODO: authentication
+'''
+@app.route('/api/expense', methods=['POST'])
+def add_expenditure():
+    errors = []
+    body = request.get_json()
+    type = body['type']
+    amount = body['amount']
+    user_id = body['user_id']
 
-# @app.route('/api/expense/<int:user_id>', methods=['POST'])
-# def save_expense(user_id):
-#     expense = Finace.query.filter(Finance.c.user_id)
+    expense = Expenses(type=type, amount=amount, user_id=user_id)
+    expense.insert()
+
+    return jsonify({
+        'success': True,
+        'messages': 'new expense is successfully registered.'
+    }), 200
+
+
+@app.route('/api/expense/<int:user_id>')
+def get_expenditure(user_id):
+    expenses = Expenses.query.filter(Expenses.user_id == user_id).all()
+
+    if len(expenses) == 0:
+        abort(404)
+
+    elif len(expenses) > 0:
+        return jsonify({
+            'expenses': [expense.format() for expense in expenses],
+            'total_expenses': sum(expense.amount for expense in expenses)
+        }), 200
+
+    else:
+        abort(500)
+
+
+@app.route('/api/expense/<int:user_id>/weekly')
+def get_weekly_expenditure(user_id):
+    weekly = []
+    today = date.today()
+    weekday = today.weekday()
+
+    for i in range(0, 6):
+        day = today - timedelta(days=weekday - i)
+        weekly.append(day)
+
+    weekly.append(today + timedelta(days=(6 - weekday)))
+
+    try:
+        result = []
+        for idx, day in enumerate(weekly):
+            expenses = Expenses.query.filter(
+                and_(func.date(Expenses.created) == day)).all()
+            data = [expense.format() for expense in expenses]
+
+            if len(data) == 0:
+                result.append({idx: 'no data available'})
+
+            elif len(data) > 0:
+                result.append({idx: data})
+
+        return jsonify({
+            'weekly-expenses': result,
+        }), 200
+
+    except AuthError:
+        abort(422)
+
 
 '''
+Practically depending on how long the finance data is stored on the db server,
+this could vary. At the moment, I will just start with enabling to filter
+the data up to a month of the current date
+'''
+@app.route('/api/expense/<int:user_id>/monthly')
+def get_monthly_expenditure(user_id):
+    monthly = []
+    pastWeeks = 0
+    currentWeek = 0
+
+    today = date.today()
+    weekday = today.weekday()
+    day = today.day
+    month = today.month
+    year = today.year
+    weeksOfTheMonth = calendar.monthcalendar(year, month)
+
+    for week in weeksOfTheMonth:
+        if day in week:
+            pastWeeks = weeksOfTheMonth.index(week)
+            currentWeek = week.index(day)
+
+    for i in range(0, pastWeeks + 1):
+        weekly = []
+        for j in range(0, 7):
+            start_of_week = today - timedelta(days=weekday - j, weeks=i)
+            weekly.append(start_of_week)
+
+        monthly.append(weekly)
+
+    try:
+        result = []
+        for week in range(0, pastWeeks + 1):
+            weeklyResult = []
+            for idx, day in enumerate(monthly[week]):
+                expenses = Expenses.query.filter(
+                    and_(func.date(Expenses.created) == day)).all()
+                data = [expense.format() for expense in expenses]
+
+                if len(data) == 0:
+                    weeklyResult.append({f'{day}': 'no data available'})
+
+                elif len(data) > 0:
+                    weeklyResult.append({f'{day}': data})
+
+            result.append(weeklyResult)
+
+        return jsonify({
+            'monthly-expenses': result,
+        }), 200
+
+    except AuthError:
+        abort(422)
+
+
+@app.route('/api/expense/<int:user_id>', methods=['DELETE'])
+def delete_expenditure(user_id):
+    expense = Expenses.query.order_by(Expenses.id.desc()).filter(
+              Expenses.user_id == user_id).first()
+
+    if expense is None:
+        abort(404)
+
+    elif expense:
+        expense.delete()
+
+        return jsonify({
+            'success': True,
+            'id': expense.id
+        }), 200
+
+    else:
+        abort(500)
+
+
+'''
+income data
+'''
+@app.route('/api/income', methods=['POST'])
+def add_income():
+    errors = []
+    body = request.get_json()
+
+    type = body['type']
+    amount = body['amount']
+    user_id = body['user_id']
+
+    income = Incomes(type=type, amount=amount, user_id=user_id)
+    income.insert()
+
+    return jsonify({
+        'success': True,
+        'messages': 'a new income is successfully registered.'
+    }), 200
+
+
+@app.route('/api/income/<int:user_id>')
+def get_income(user_id):
+    incomes = Incomes.query.filter(Incomes.user_id == user_id).all()
+
+    if len(incomes) == 0:
+        abort(404)
+
+    elif len(incomes) > 0:
+        return jsonify({
+            'incomes': [income.format() for income in incomes],
+            'total_incomes': sum(income.amount for income in incomes)
+        }), 200
+
+    else:
+        abort(500)
+
+
+@app.route('/api/income/<int:user_id>', methods=['DELETE'])
+def delete_income(user_id):
+    income = Incomes.query.order_by(Incomes.id.desc()).filter(
+                                    Incomes.user_id == user_id).first()
+
+    if income is None:
+        abort(404)
+
+    elif income:
+        income.delete()
+
+        return jsonify({
+            'success': True,
+            'id': income.id
+        }), 200
+
+    else:
+        abort(500)
 
 
 @app.errorhandler(400)
