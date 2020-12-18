@@ -91,6 +91,7 @@ setting
 heroku config:set APP_SETTINGS=config.StagingConfig --remote stage
 heroku config:set APP_SETTINGS=config.ProductionConfig --remote pro
 
+heroku config --app pockie-app-stage
 
 ```
 

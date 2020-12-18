@@ -2,7 +2,7 @@ from app import db
 from datetime import datetime
 
 class Users(db.Model):
-    __tablename__ = 'Users'
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer(), primary_key=True, unique=True, nullable=False)
     first_name = db.Column(db.String(32), nullable=False)
@@ -15,13 +15,13 @@ class Users(db.Model):
                        default=datetime.utcnow)
     expense = db.relationship(
         'Expenses',
-        backref=db.backref('Users', cascade="save-update"), lazy=True)
+        backref=db.backref('users', cascade="save-update"), lazy=True)
     income = db.relationship(
         'Incomes',
-        backref=db.backref('Users', cascade="save-update"), lazy=True)
+        backref=db.backref('users', cascade="save-update"), lazy=True)
 
     def __repr__(self):
-        return f'<User ID: {self.id}>'
+        return f'<Users ID: {self.id}>'
 
     def __init__(self, first_name, last_name,
                  email, joint, participants, currency):
@@ -60,12 +60,12 @@ class Users(db.Model):
 
 
 class Incomes(db.Model):
-    __tablename__ = 'Incomes'
+    __tablename__ = 'incomes'
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     type = db.Column(db.Integer(), nullable=False)
     amount = db.Column(db.Integer(), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
 
@@ -96,12 +96,12 @@ class Incomes(db.Model):
 
 
 class Expenses(db.Model):
-    __tablename__ = 'Expenses'
+    __tablename__ = 'expenses'
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     type = db.Column(db.Integer(), nullable=False)
     amount = db.Column(db.Integer(), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
 
@@ -128,4 +128,4 @@ class Expenses(db.Model):
         }
 
     def __repr__(self):
-        return f'<Expense ID: {self.id}>'
+        return f'<Expenses ID: {self.id}>'

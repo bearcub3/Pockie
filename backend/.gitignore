@@ -1,5 +1,4 @@
 .DS_Store
-/migrations
 
 .Python
 .env
@@ -29,3 +28,5 @@ coverage.xml
 
 # Translations
 *.mo
+
+__pychache__
