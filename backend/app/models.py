@@ -1,6 +1,7 @@
 from app import db
 from datetime import datetime
 
+
 class Users(db.Model):
     __tablename__ = 'users'
 
@@ -18,6 +19,9 @@ class Users(db.Model):
         backref=db.backref('users', cascade="save-update"), lazy=True)
     income = db.relationship(
         'Incomes',
+        backref=db.backref('users', cascade="save-update"), lazy=True)
+    goal = db.relationship(
+        'Goals',
         backref=db.backref('users', cascade="save-update"), lazy=True)
 
     def __repr__(self):
@@ -78,6 +82,9 @@ class Incomes(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def update(self):
+        db.session.commit()
+
     def delete(self):
         db.session.delete(self)
         db.session.commit()
@@ -114,6 +121,9 @@ class Expenses(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def update(self):
+        db.session.commit()
+
     def delete(self):
         db.session.delete(self)
         db.session.commit()
@@ -129,3 +139,91 @@ class Expenses(db.Model):
 
     def __repr__(self):
         return f'<Expenses ID: {self.id}>'
+
+
+class Goals(db.Model):
+    __tablename__ = 'goals'
+
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    purpose = db.Column(db.Integer(), nullable=False)
+    amount = db.Column(db.Integer(), nullable=False)
+    unit = db.Column(db.Integer(), nullable=False)
+    period = db.Column(db.Integer(), nullable=False, default=1)
+    joint = db.Column(db.Boolean(), nullable=False, default=False)
+    participant = db.Column(db.ARRAY(db.Integer()), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    completed = db.Column(db.Boolean(), nullable=False, default=False)
+    created = db.Column(db.DateTime, nullable=False,
+                        default=datetime.utcnow)
+
+    saving = db.relationship(
+        'Savings',
+        backref=db.backref('goals', cascade="save-update"), lazy=True)
+
+    def __init__(self, purpose, amount, unit,
+                 period, joint, participant, user_id):
+        self.purpose = purpose
+        self.amount = amount
+        self.unit = unit
+        self.period = period
+        self.joint = joint
+        self.participant = participant
+        self.user_id = user_id
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'type': self.type,
+            'amount': self.amount,
+            'user_id': self.user_id,
+            'issued': self.created
+        }
+
+    def __repr__(self):
+        return f'<Goals ID: {self.id}>'
+
+
+class Savings(db.Model):
+    __tablename__ = 'savings'
+
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'))
+    amount = db.Column(db.Integer(), nullable=False)
+    created = db.Column(db.DateTime, nullable=False,
+                        default=datetime.utcnow)
+
+    def __init__(self, goal_id, amount):
+        self.goal_id = goal_id
+        self.amount = amount
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'goal_id': self.goal_id,
+            'amount': self.amount,
+        }
+
+    def __repr__(self):
+        return f'<Savings ID: {self.id}>'

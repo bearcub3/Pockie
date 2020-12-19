@@ -48,13 +48,14 @@ flask run
 ```
 
 
-
 ## How to run unittest
 
 `python -m unittest discover -s test`
 
 
+## Python style checker
 
+`pycodestyle --first <files>`
 
 ---
 

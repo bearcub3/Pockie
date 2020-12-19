@@ -4,6 +4,7 @@ import json
 import os
 import urllib
 from sqlalchemy import and_, func
+from sqlalchemy.sql import extract
 
 from flask import Flask, request, jsonify, abort, flash, session
 
@@ -13,7 +14,9 @@ from app.auth import AuthError, requires_auth, fetch_jwk_for
 
 
 def drop_everything():
-    """(On a live db) drops all foreign key constraints before dropping all tables.
+    """
+    (On a live db) drops all foreign key constraints
+    before dropping all tables.
     Workaround for SQLAlchemy not doing DROP ## CASCADE for drop_all()
     (https://github.com/pallets/flask-sqlalchemy/issues/722)
     """
@@ -25,8 +28,8 @@ def drop_everything():
     inspector = Inspector.from_engine(db.engine)
 
     # We need to re-create a minimal metadata with only the required things to
-    # successfully emit drop constraints and tables commands for postgres (based
-    # on the actual schema of the running instance)
+    # successfully emit drop constraints and tables commands
+    # for postgres (based on the actual schema of the running instance)
     meta = MetaData()
     tables = []
     all_fkeys = []
@@ -154,30 +157,17 @@ def edit_user(user_id):
 
     if user:
         try:
-            first_name = body['first_name']
-            last_name = body['last_name']
-            email = body['email']
-            participants = body['participants']
-            joint = body['joint']
-            currency = body['currency']
+            form = {
+                first_name: body['first_name'],
+                last_name: body['last_name'],
+                email: body['email'],
+                participants: body['participants'],
+                joint: body['joint'],
+                currency: body['currency'],
+            }
 
-            if first_name:
-                user.first_name = first_name
-
-            if last_name:
-                user.last_name = last_name
-
-            if email:
-                user.email = email
-
-            if participants:
-                user.participants = participants
-
-            if joint:
-                user.joint = joint
-
-            if currency:
-                user.currency = currency
+            for content in form:
+                user[content] = content
 
             user.update()
 
@@ -248,46 +238,13 @@ def get_expenditure(user_id):
         abort(500)
 
 
-@app.route('/api/expense/<int:user_id>/weekly')
-def get_weekly_expenditure(user_id):
-    weekly = []
-    today = date.today()
-    weekday = today.weekday()
-
-    for i in range(0, 6):
-        day = today - timedelta(days=weekday - i)
-        weekly.append(day)
-
-    weekly.append(today + timedelta(days=(6 - weekday)))
-
-    try:
-        result = []
-        for idx, day in enumerate(weekly):
-            expenses = Expenses.query.filter(
-                and_(func.date(Expenses.created) == day)).all()
-            data = [expense.format() for expense in expenses]
-
-            if len(data) == 0:
-                result.append({idx: 'no data available'})
-
-            elif len(data) > 0:
-                result.append({idx: data})
-
-        return jsonify({
-            'weekly-expenses': result,
-        }), 200
-
-    except AuthError:
-        abort(422)
-
-
 '''
 Practically depending on how long the finance data is stored on the db server,
 this could vary. At the moment, I will just start with enabling to filter
 the data up to a month of the current date
 '''
-@app.route('/api/expense/<int:user_id>/monthly')
-def get_monthly_expenditure(user_id):
+@app.route('/api/weekly/<int:user_id>')
+def get_weekly_result(user_id):
     monthly = []
     pastWeeks = 0
     currentWeek = 0
@@ -313,26 +270,69 @@ def get_monthly_expenditure(user_id):
         monthly.append(weekly)
 
     try:
-        result = []
+        expenses_result = []
+        incomes_result = []
         for week in range(0, pastWeeks + 1):
-            weeklyResult = []
+            weekly_expenses = []
+            weekly_incomes = []
             for idx, day in enumerate(monthly[week]):
                 expenses = Expenses.query.filter(
                     and_(func.date(Expenses.created) == day)).all()
-                data = [expense.format() for expense in expenses]
 
-                if len(data) == 0:
-                    weeklyResult.append({f'{day}': 'no data available'})
+                incomes = Incomes.query.filter(
+                    and_(func.date(Incomes.created) == day)).all()
+                
+                filteredExpense = [expense.format() for expense in expenses]
+                filteredIncomes = [income.format() for income in incomes]
 
-                elif len(data) > 0:
-                    weeklyResult.append({f'{day}': data})
+                if len(filteredExpense) == 0 or len(filteredIncomes) == 0:
+                    weekly_expenses.append({f'{day}': None })
+                    weekly_incomes.append({f'{day}': None })
 
-            result.append(weeklyResult)
+                elif len(filteredExpense) > 0 or len(filteredIncomes) > 0:
+                    weekly_expenses.append({f'{day}': filteredExpense})
+                    weekly_incomes.append({f'{day}': filteredIncomes})
+
+            expenses_result.append(weekly_expenses)
+            incomes_result.append(weekly_incomes)
 
         return jsonify({
-            'monthly-expenses': result,
+            'weekly_expense': expenses_result,
+            'weekly_income': incomes_result,
         }), 200
 
+    except AuthError:
+        abort(422)
+
+
+@app.route('/api/monthly/<int:user_id>')
+def get_monthly_result(user_id):
+    today = date.today()
+    month = today.month
+    year = today.year
+
+    try:
+        result = {
+            'year': year,
+            'month': month,
+            'monthly_expense': 0,
+            'monthly_income': 0,
+        }
+
+        monthly_expenses = Expenses.query.\
+            filter(and_(extract('year', Expenses.created) == year,
+                        extract('month', Expenses.created) == month)).all()
+
+        monthly_incomes = Incomes.query.\
+            filter(and_(extract('year', Incomes.created) == year,
+                        extract('month', Incomes.created) == month)).all()
+
+        result['monthly_expense'] = sum(expense.amount for expense in monthly_expenses)
+        result['monthly_income'] = sum(income.amount for income in monthly_incomes)
+
+        print(result)
+        return ''
+    
     except AuthError:
         abort(422)
 
