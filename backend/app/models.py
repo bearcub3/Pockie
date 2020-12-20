@@ -161,7 +161,7 @@ class Goals(db.Model):
         backref=db.backref('goals', cascade="save-update"), lazy=True)
 
     def __init__(self, purpose, amount, unit,
-                 period, joint, participant, user_id):
+                 period, joint, participant, user_id, completed):
         self.purpose = purpose
         self.amount = amount
         self.unit = unit
@@ -169,6 +169,7 @@ class Goals(db.Model):
         self.joint = joint
         self.participant = participant
         self.user_id = user_id
+        self.completed = completed
 
     def insert(self):
         db.session.add(self)
@@ -184,8 +185,12 @@ class Goals(db.Model):
     def format(self):
         return {
             'id': self.id,
-            'type': self.type,
+            'purpose': self.purpose,
             'amount': self.amount,
+            'unit': self.unit,
+            'period': self.period,
+            'joint': self.joint,
+            'participant': self.participant,
             'user_id': self.user_id,
             'issued': self.created
         }

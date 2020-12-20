@@ -1,5 +1,7 @@
 from datetime import date, datetime, timedelta
 import calendar
+import re
+from math import floor, ceil
 import json
 import os
 import urllib
@@ -9,7 +11,7 @@ from sqlalchemy.sql import extract
 from flask import Flask, request, jsonify, abort, flash, session
 
 from app import app, db
-from app.models import Users, Incomes, Expenses
+from app.models import Users, Incomes, Expenses, Goals, Savings
 from app.auth import AuthError, requires_auth, fetch_jwk_for
 
 
@@ -72,7 +74,6 @@ def index():
 
 @app.route('/api/user', methods=['POST'])
 def user_signup():
-    errors = []
     body = request.get_json()
 
     try:
@@ -206,7 +207,6 @@ expense data
 '''
 @app.route('/api/expense', methods=['POST'])
 def add_expenditure():
-    errors = []
     body = request.get_json()
     type = body['type']
     amount = body['amount']
@@ -245,61 +245,75 @@ the data up to a month of the current date
 '''
 @app.route('/api/weekly/<int:user_id>')
 def get_weekly_result(user_id):
-    monthly = []
-    pastWeeks = 0
-    currentWeek = 0
-
-    today = date.today()
-    weekday = today.weekday()
-    day = today.day
-    month = today.month
-    year = today.year
-    weeksOfTheMonth = calendar.monthcalendar(year, month)
-
-    for week in weeksOfTheMonth:
-        if day in week:
-            pastWeeks = weeksOfTheMonth.index(week)
-            currentWeek = week.index(day)
-
-    for i in range(0, pastWeeks + 1):
-        weekly = []
-        for j in range(0, 7):
-            start_of_week = today - timedelta(days=weekday - j, weeks=i)
-            weekly.append(start_of_week)
-
-        monthly.append(weekly)
-
     try:
-        expenses_result = []
-        incomes_result = []
-        for week in range(0, pastWeeks + 1):
-            weekly_expenses = []
-            weekly_incomes = []
-            for idx, day in enumerate(monthly[week]):
-                expenses = Expenses.query.filter(
-                    and_(func.date(Expenses.created) == day)).all()
+        user = Users.query.filter(Expenses.user_id == user_id).one_or_none()
 
-                incomes = Incomes.query.filter(
-                    and_(func.date(Incomes.created) == day)).all()
-                
-                filteredExpense = [expense.format() for expense in expenses]
-                filteredIncomes = [income.format() for income in incomes]
+        if user:
+            monthly = []
+            pastWeeks = 0
+            currentWeek = 0
 
-                if len(filteredExpense) == 0 or len(filteredIncomes) == 0:
-                    weekly_expenses.append({f'{day}': None })
-                    weekly_incomes.append({f'{day}': None })
+            today = date.today()
+            weekday = today.weekday()
+            day = today.day
+            month = today.month
+            year = today.year
+            weeksOfTheMonth = calendar.monthcalendar(year, month)
 
-                elif len(filteredExpense) > 0 or len(filteredIncomes) > 0:
-                    weekly_expenses.append({f'{day}': filteredExpense})
-                    weekly_incomes.append({f'{day}': filteredIncomes})
+            for week in weeksOfTheMonth:
+                if day in week:
+                    pastWeeks = weeksOfTheMonth.index(week)
+                    currentWeek = week.index(day)
 
-            expenses_result.append(weekly_expenses)
-            incomes_result.append(weekly_incomes)
+                    for i in range(0, pastWeeks + 1):
+                        weekly = []
+                        for j in range(0, 7):
+                            start_of_week = today - timedelta(days=weekday - j, weeks=i)
+                            weekly.append(start_of_week)
 
-        return jsonify({
-            'weekly_expense': expenses_result,
-            'weekly_income': incomes_result,
-        }), 200
+                        monthly.append(weekly)
+
+                    expenses_result = []
+                    incomes_result = []
+
+                    for week in range(0, pastWeeks + 1):
+                        weekly_expenses = []
+                        weekly_incomes = []
+
+                        for idx, day in enumerate(monthly[week]):
+                            expenses = Expenses.query.filter(
+                                and_(func.date(Expenses.created) == day,
+                                    Expenses.user_id == user_id)).all()
+
+                            incomes = Incomes.query.filter(
+                                and_(func.date(Incomes.created) == day,
+                                    Incomes.user_id == user_id)).all()
+                            
+                            filteredExpense = [expense.format() for expense in expenses]
+                            filteredIncomes = [income.format() for income in incomes]
+
+                            if len(filteredExpense) == 0:
+                                weekly_expenses.append({f'{day}': None })
+
+                            elif len(filteredExpense) > 0:
+                                weekly_expenses.append({f'{day}': filteredExpense})
+                                
+                            if len(filteredIncomes) == 0:
+                                weekly_incomes.append({f'{day}': None })
+
+                            elif len(filteredIncomes) > 0:
+                                weekly_incomes.append({f'{day}': filteredIncomes})
+                            
+                        expenses_result.append(weekly_expenses)
+                        incomes_result.append(weekly_incomes)
+
+            return jsonify({
+                'weekly_expense': expenses_result,
+                'weekly_income': incomes_result,
+            }), 200
+
+        elif user is None:
+            abort(404)
 
     except AuthError:
         abort(422)
@@ -307,32 +321,36 @@ def get_weekly_result(user_id):
 
 @app.route('/api/monthly/<int:user_id>')
 def get_monthly_result(user_id):
-    today = date.today()
-    month = today.month
-    year = today.year
-
     try:
-        result = {
-            'year': year,
-            'month': month,
-            'monthly_expense': 0,
-            'monthly_income': 0,
-        }
+        user = Users.query.filter(Expenses.user_id == user_id).one_or_none()
 
-        monthly_expenses = Expenses.query.\
-            filter(and_(extract('year', Expenses.created) == year,
-                        extract('month', Expenses.created) == month)).all()
+        if user:
+            today = date.today()
+            month = today.month
+            year = today.year
+            result = {
+                'year': year,
+                'month': month,
+                'monthly_expense': 0,
+                'monthly_income': 0,
+            }
 
-        monthly_incomes = Incomes.query.\
-            filter(and_(extract('year', Incomes.created) == year,
-                        extract('month', Incomes.created) == month)).all()
+            monthly_expenses = Expenses.query.\
+                filter(and_(extract('year', Expenses.created) == year,
+                            extract('month', Expenses.created) == month)).all()
 
-        result['monthly_expense'] = sum(expense.amount for expense in monthly_expenses)
-        result['monthly_income'] = sum(income.amount for income in monthly_incomes)
+            monthly_incomes = Incomes.query.\
+                filter(and_(extract('year', Incomes.created) == year,
+                            extract('month', Incomes.created) == month)).all()
 
-        print(result)
-        return ''
-    
+            result['monthly_expense'] = sum(expense.amount for expense in monthly_expenses)
+            result['monthly_income'] = sum(income.amount for income in monthly_incomes)
+
+            return jsonify(result), 200
+        
+        elif user is None:
+            abort(404)
+            
     except AuthError:
         abort(422)
 
@@ -362,7 +380,6 @@ income data
 '''
 @app.route('/api/income', methods=['POST'])
 def add_income():
-    errors = []
     body = request.get_json()
 
     type = body['type']
@@ -413,6 +430,172 @@ def delete_income(user_id):
 
     else:
         abort(500)
+
+
+'''
+Goals data
+'''
+@app.route('/api/goals', methods=['POST'])
+def set_goal():
+    try:
+        body = request.get_json()
+
+        purpose = body['purpose']
+        amount = body['amount']
+        unit = body['unit']
+        period = body['period']
+        joint = body['joint']
+        participant = body['participant']
+        user_id = body['user_id']
+
+        goal = Goals(purpose=purpose, amount=amount, unit=unit,
+                     period=period, joint=joint, participant=participant,
+                     user_id=user_id)
+        goal.insert()
+
+        return jsonify({
+            'success': True,
+            'messages': 'A new goal is successfully registered.'
+        }), 200
+    
+    except Exception:
+        abort(500)
+
+
+@app.route('/api/goals/<int:user_id>')
+def get_goals(user_id):
+    goals = Goals.query.filter(Goals.user_id == user_id).all()
+
+    if len(goals) == 0:
+        abort(404)
+
+    elif len(goals) > 0:
+        return jsonify({
+            'goals': [goal.format() for goal in goals]
+        }), 200
+
+    else:
+        abort(500)
+
+
+'''
+saving data
+'''
+@app.route('/api/savings', methods=['POST'])
+def save_money():
+    try:
+        body = request.get_json()
+        
+        goal_id = body['goal_id']
+        amount = body['amount']
+
+        goal = Goals.query.filter(Goals.id == goal_id).first()
+        savings = Savings.query.filter(Savings.goal_id == goal.id).all()
+        total = sum(saving.amount for saving in savings)
+
+        if total + amount >= goal.amount:
+            goal.completed = True
+            goal.update()
+
+        saving = Savings(goal_id=goal_id, amount=amount)
+        saving.insert()
+
+        return jsonify({
+            'success': True,
+            'messages': 'A new saving is successfully registered.'
+        }), 200
+    
+    except Exception:
+        abort(500)
+
+
+'''
+utility functions
+'''
+def get_days(days):
+    regex = '[days, 0:00:00]\w+'
+    day = re.split(regex, str(days), 1)
+    return int(day[0])
+
+
+def duration_calculation(goal_year, goal_month, goal_day):
+    today = date.today()
+    day = today.day
+    month = today.month
+    year = today.year
+
+    end = datetime(goal_year, goal_month, goal_day)
+    start = datetime(year, month, day)
+
+    remaining_months = (end.year - start.year) * 12 + (end.month - start.month)
+
+    if remaining_months == 1 or remaining_months < 1:
+        remaining_days = date(goal_year, goal_month, goal_day) - date(year, month, day)
+        remaining_weeks = floor(get_days(remaining_days)/ 7) 
+
+        if remaining_weeks == 0:
+            return { 'days': get_days(remaining_days) }
+        elif remaining_weeks > 0:    
+            return { 'weeks': int(remaining_weeks) }
+    
+    else:
+        return { 'month' : remaining_months }
+
+
+@app.route('/api/savings/<int:user_id>')
+def get_saving_status(user_id):
+    goals = Goals.query.filter(Goals.user_id == user_id).all()
+    result = []
+    
+    for goal in goals:
+        savings = Savings.query.filter(Savings.goal_id == goal.id).all()
+        total = sum(saving.amount for saving in savings)
+        due = ''
+
+        today = date.today()
+        day = today.day
+        month = today.month
+        year = today.year
+        goal_date = day
+
+        # saving goal period unit : weeks
+        if goal.unit == 0:
+            due_date =  goal.created + timedelta(weeks=goal.period)
+            due = duration_calculation(due_date.year, due_date.month, due_date.day)
+
+        # saving goal period unit : month
+        if goal.unit == 1:
+            goal_month = month + goal.period
+
+            if goal_month > 12:
+                goal_month = goal_month - 12
+                goal_year = year + 1
+
+            due = duration_calculation(goal_year, goal_month, goal_date)
+
+        # saving goal period unit : years
+        if goal.unit == 2:
+            goal_month = month
+            goal_year = year + goal.period
+            due = duration_calculation(goal_year, goal_month, goal_date)
+
+        # data format for result
+        detail = {
+            'goal_id': goal.id,
+            'goal_amount': goal.amount,
+            'current_saving': total,
+            'joint': goal.joint,
+            'participants': goal.participant,
+            'due_date': due,
+            'completed': goal.completed
+        }
+
+        result.append(detail)
+
+    return jsonify({
+        'success': True,
+        'result': result
+    }),200
 
 
 @app.errorhandler(400)
@@ -473,7 +656,6 @@ def server_error(error):
 implement error handler for AuthError
     error handler should conform to general task above
 '''
-
 
 @app.errorhandler(AuthError)
 def handle_auth_error(error):
