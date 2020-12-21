@@ -9,11 +9,11 @@ class Users(db.Model):
     first_name = db.Column(db.String(32), nullable=False)
     last_name = db.Column(db.String(32), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
-    participants = db.Column(db.ARRAY(db.Integer()), nullable=True)
     joint = db.Column(db.Boolean(), default=False)
     currency = db.Column(db.String(3), nullable=False)
-    joined = db.Column(db.DateTime, nullable=False,
-                       default=datetime.utcnow)
+    joined = db.Column(db.DateTime,
+                       nullable=False, default=datetime.utcnow)
+
     expense = db.relationship(
         'Expenses',
         backref=db.backref('users', cascade="save-update"), lazy=True)
@@ -23,18 +23,19 @@ class Users(db.Model):
     goal = db.relationship(
         'Goals',
         backref=db.backref('users', cascade="save-update"), lazy=True)
+    participants = db.relationship(
+        'Participants', backref=db.backref('users', cascade="save-update"))
 
     def __repr__(self):
         return f'<Users ID: {self.id}>'
 
     def __init__(self, first_name, last_name,
-                 email, joint, participants, currency):
+                 email, joint, currency):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
-        self.joint = joint
         self.currency = currency
-        self.participatns = participants
+        self.joint = joint
 
     def insert(self):
         db.session.add(self)
@@ -56,9 +57,8 @@ class Users(db.Model):
                 'last_name': self.last_name
             },
             'email': self.email,
-            'joint': self.joint,
             'currency': self.currency,
-            'participants': self.participants,
+            'joint': self.joint,
             'joined': self.joined
         }
 
@@ -94,12 +94,11 @@ class Incomes(db.Model):
             'id': self.id,
             'type': self.type,
             'amount': self.amount,
-            'user_id': self.user_id,
-            'issued': self.created
+            'user_id': self.user_id
         }
 
     def __repr__(self):
-        return f'<Income ID: {self.id}>'
+        return f'<Incomes ID: {self.id}>'
 
 
 class Expenses(db.Model):
@@ -149,8 +148,8 @@ class Goals(db.Model):
     amount = db.Column(db.Integer(), nullable=False)
     unit = db.Column(db.Integer(), nullable=False)
     period = db.Column(db.Integer(), nullable=False, default=1)
-    joint = db.Column(db.Boolean(), nullable=False, default=False)
-    participant = db.Column(db.ARRAY(db.Integer()), nullable=True)
+    joint_members = db.Column(db.ARRAY(db.Integer()), nullable=True,
+                            default='{}')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     completed = db.Column(db.Boolean(), nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False,
@@ -161,13 +160,12 @@ class Goals(db.Model):
         backref=db.backref('goals', cascade="save-update"), lazy=True)
 
     def __init__(self, purpose, amount, unit,
-                 period, joint, participant, user_id, completed):
+                 period, joint_members, user_id, completed):
         self.purpose = purpose
         self.amount = amount
         self.unit = unit
         self.period = period
-        self.joint = joint
-        self.participant = participant
+        self.joint_members = joint_members
         self.user_id = user_id
         self.completed = completed
 
@@ -189,8 +187,7 @@ class Goals(db.Model):
             'amount': self.amount,
             'unit': self.unit,
             'period': self.period,
-            'joint': self.joint,
-            'participant': self.participant,
+            'joint_members': self.joint_members,
             'user_id': self.user_id,
             'issued': self.created
         }
@@ -232,3 +229,41 @@ class Savings(db.Model):
 
     def __repr__(self):
         return f'<Savings ID: {self.id}>'
+
+
+class Participants(db.Model):
+    __tablename__ = 'participants'
+
+    id = db.Column(db.Integer(), primary_key=True, unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    joint_member_id = db.Column(db.Integer(), nullable=False)
+    nickname = db.Column(db.String(10), nullable=False)
+    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __init__(self, user_id, joint_member_id, nickname):
+        self.user_id = user_id
+        self.joint_member_id = joint_member_id
+        self.nickname = nickname
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'joint_member_id': self.joint_member_id,
+            'user_id': self.user_id,
+            'nickname': self.nickname
+        }
+
+    def __repr__(self):
+        return f'<Participants ID: {self.id}>'
