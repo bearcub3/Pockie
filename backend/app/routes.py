@@ -60,7 +60,7 @@ def user_signup():
                 'messages': 'A new user is successfully registered.'
             }), 200
 
-    except AuthError:
+    except BaseException:
         abort(422)
 
 
@@ -79,7 +79,7 @@ def get_users():
         }), 200
 
     else:
-        abort(AuthError)
+        abort(BaseException)
 
 
 @app.route('/api/user/<int:user_id>', methods=['GET'])
@@ -98,7 +98,7 @@ def get_a_user(user_id):
         }), 200
 
     else:
-        abort(AuthError)
+        abort(BaseException)
 
 
 @app.route('/api/user/<int:user_id>', methods=['PATCH'])
@@ -131,7 +131,7 @@ def edit_user(user_id):
                 'user': user.format()
             }), 200
 
-        except AuthError:
+        except BaseException:
             abort(422)
 
 
@@ -152,7 +152,7 @@ def delete_user(user_id):
         }), 200
 
     else:
-        abort(AuthError)
+        abort(BaseException)
 
 
 @app.route('/api/user/joint/<int:user_id>', methods=['POST'])
@@ -174,18 +174,27 @@ def add_joint_member(user_id):
             }), 406
 
         elif duplicate is None:
+            participant1 = Participants(user_id=user_id,
+                                        joint_member_id=joint_member_id,
+                                        nickname=nickname)
+            participant2 = Participants(user_id=joint_member_id,
+                                        joint_member_id=user_id,
+                                        nickname=nickname)
 
-            participant = Participants(user_id=user_id,
-                                       joint_member_id=joint_member_id,
-                                       nickname=nickname)
-            participant.insert()  
+            Users.query.filter(Users.id == user_id).\
+                update({'joint': True})
+            Users.query.filter(Users.id == joint_member_id).\
+                update({'joint': True})
+
+            participant1.insert()
+            participant2.insert()
 
             return jsonify({
                 'success': True,
-                'messages': 'A new participants is successfully registered.'
+                'messages': 'A new participant is successfully registered.'
             }), 200
 
-    except AuthError:
+    except BaseException:
         abort(422)
 
 
@@ -204,8 +213,8 @@ def get_joint_member(user_id):
                     'participants': [participant.format() for participant in my_participants]
                 }), 200
 
-    except AuthError:
-        abort(422)
+    except BaseException:
+        abort(400)
 
 
 '''
@@ -249,7 +258,7 @@ def get_expenditure(user_id):
 @app.route('/api/weekly/<int:user_id>')
 def get_weekly_result(user_id):
     try:
-        user = Users.query.filter(Expenses.user_id == user_id).one_or_none()
+        user = Users.query.filter(Users.id == user_id).one_or_none()
 
         if user:
             monthly = []
@@ -331,7 +340,7 @@ def get_weekly_result(user_id):
 @app.route('/api/monthly/<int:user_id>')
 def get_monthly_result(user_id):
     try:
-        user = Users.query.filter(Expenses.user_id == user_id).one_or_none()
+        user = Users.query.filter(Users.id == user_id).one_or_none()
 
         if user:
             today = date.today()
@@ -510,6 +519,7 @@ def delete_goals(user_id):
 
     else:
         abort(500)
+
 
 '''
 saving data

@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+import simplejson as json
 
 
 class Users(db.Model):
@@ -68,7 +69,7 @@ class Incomes(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     type = db.Column(db.Integer(), nullable=False)
-    amount = db.Column(db.Integer(), nullable=False)
+    amount = db.Column(db.Numeric(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
@@ -93,7 +94,7 @@ class Incomes(db.Model):
         return {
             'id': self.id,
             'type': self.type,
-            'amount': self.amount,
+            'amount': json.dumps(self.amount),
             'user_id': self.user_id
         }
 
@@ -106,7 +107,7 @@ class Expenses(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     type = db.Column(db.Integer(), nullable=False)
-    amount = db.Column(db.Integer(), nullable=False)
+    amount = db.Column(db.Numeric(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
@@ -131,7 +132,7 @@ class Expenses(db.Model):
         return {
             'id': self.id,
             'type': self.type,
-            'amount': self.amount,
+            'amount': json.dumps(self.amount),
             'user_id': self.user_id,
             'issued': self.created
         }
@@ -145,11 +146,11 @@ class Goals(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     purpose = db.Column(db.Integer(), nullable=False)
-    amount = db.Column(db.Integer(), nullable=False)
+    amount = db.Column(db.Numeric(), nullable=False)
     unit = db.Column(db.Integer(), nullable=False)
     period = db.Column(db.Integer(), nullable=False, default=1)
     joint_members = db.Column(db.ARRAY(db.Integer()), nullable=True,
-                            default='{}')
+                              default='{}')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     completed = db.Column(db.Boolean(), nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False,
@@ -160,14 +161,13 @@ class Goals(db.Model):
         backref=db.backref('goals', cascade="save-update"), lazy=True)
 
     def __init__(self, purpose, amount, unit,
-                 period, joint_members, user_id, completed):
+                 period, joint_members, user_id):
         self.purpose = purpose
         self.amount = amount
         self.unit = unit
         self.period = period
         self.joint_members = joint_members
         self.user_id = user_id
-        self.completed = completed
 
     def insert(self):
         db.session.add(self)
@@ -184,7 +184,7 @@ class Goals(db.Model):
         return {
             'id': self.id,
             'purpose': self.purpose,
-            'amount': self.amount,
+            'amount': json.dumps(self.amount),
             'unit': self.unit,
             'period': self.period,
             'joint_members': self.joint_members,
@@ -201,7 +201,7 @@ class Savings(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'))
-    amount = db.Column(db.Integer(), nullable=False)
+    amount = db.Column(db.Numeric(), nullable=False)
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
 
@@ -224,7 +224,7 @@ class Savings(db.Model):
         return {
             'id': self.id,
             'goal_id': self.goal_id,
-            'amount': self.amount,
+            'amount': json.dumps(self.amount),
         }
 
     def __repr__(self):

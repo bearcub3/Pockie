@@ -1,7 +1,6 @@
 from datetime import date, datetime, timedelta
 import re
 from math import floor
-
 from app import app, db
 
 def drop_everything():

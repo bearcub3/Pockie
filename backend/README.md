@@ -115,7 +115,11 @@ heroku addons:create heroku-postgresql:hobby-dev --app <server name>
 
 [Heroku Postgres Follower Databases](https://devcenter.heroku.com/articles/heroku-postgres-follower-databases)
 
+```
+heroku logs --tail --app pockie-app-stage
 
+heroku pg:psql
+```
 
 ## Auth0
 
