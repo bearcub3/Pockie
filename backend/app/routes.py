@@ -150,48 +150,58 @@ def delete_user(user_id):
         abort(BaseException)
 
 
-@app.route('/api/user/joint/<int:user_id>', methods=['POST'])
-def add_joint_member(user_id):
-    body = request.get_json()
+@app.route('/api/user/joint', methods=['POST'])
+def add_joint_member():
     try:
+        body = request.get_json()
         user_id = body['user_id']
-        joint_member_id = body['joint_member_id']
+        joint_member_email = body['joint_member_email']
         nickname = body['nickname']
 
-        duplicate = Participants.query.filter(and_(
-            Participants.user_id == user_id,
-            Participants.joint_member_id == joint_member_id)).first()
+        # find a same participant if there is any by email
+        partner = Users.query.filter(Users.email == joint_member_email).first()
 
-        if duplicate:
+        if partner is None:
             return jsonify({
                 'success': False,
-                'messages': 'The member is already your partner.'
+                'messages': 'We do not have the account.'
             }), 406
 
-        elif duplicate is None:
-            participant1 = Participants(user_id=user_id,
-                                        joint_member_id=joint_member_id,
-                                        nickname=nickname)
-            participant2 = Participants(user_id=joint_member_id,
-                                        joint_member_id=user_id,
-                                        nickname=nickname)
+        if partner:
+            duplicate = Participants.query.filter(and_(
+                Participants.user_id == user_id,
+                Participants.joint_member_id == partner.id)).first()
 
-            Users.query.filter(Users.id == user_id).\
-                update({'joint': True})
-            Users.query.filter(Users.id == joint_member_id).\
-                update({'joint': True})
+            if duplicate:
+                return jsonify({
+                    'success': False,
+                    'messages': 'The member is already your partner.'
+                }), 406
 
-            participant1.insert()
-            participant2.insert()
+            elif duplicate is None:
+                participant1 = Participants(user_id=user_id,
+                                            joint_member_id=partner.id,
+                                            nickname=nickname)
+                participant2 = Participants(user_id=partner.id,
+                                            joint_member_id=user_id,
+                                            nickname=nickname)
 
-            return jsonify({
-                'success': True,
-                'messages': 'A new participant is successfully registered.'
-            }), 200
+                Users.query.filter(Users.id == user_id).\
+                    update({'joint': True})
+                Users.query.filter(Users.id == partner.id).\
+                    update({'joint': True})
 
-    except BaseException:
-        abort(422)
+                participant1.insert()
+                participant2.insert()
 
+                return jsonify({
+                    'success': True,
+                    'messages': 'A new participant is successfully registered.'
+                }), 200
+
+    except:
+        abort(500)
+        
 
 @app.route('/api/user/joint/<int:user_id>')
 def get_joint_member(user_id):
@@ -208,8 +218,8 @@ def get_joint_member(user_id):
                     'participants': [participant.format() for participant in my_participants]
                 }), 200
 
-    except BaseException:
-        abort(400)
+    except:
+        abort(500)
 
 
 '''
@@ -503,7 +513,7 @@ def set_goal():
             'messages': 'A new goal is successfully registered.'
         }), 200
 
-    except BaseException:
+    except:
         abort(500)
 
 
@@ -537,6 +547,7 @@ def edit_goal(goal_id):
             goal.amount = body['amount']
             goal.unit = body['unit']
             goal.period = body['period']
+            goal.joint_members = body['joint_members']
 
             goal.update()
             
@@ -549,9 +560,9 @@ def edit_goal(goal_id):
             abort(422)
 
 
-@app.route('/api/goals/<int:user_id>', methods=['DELETE'])
-def delete_goals(user_id):
-    goal = Goals.query.filter(Goals.user_id == user_id).one_or_none()
+@app.route('/api/goals/<int:goal_id>', methods=['DELETE'])
+def delete_goals(goal_id):
+    goal = Goals.query.filter(Goals.id == goal_id).one_or_none()
 
     if goal is None:
         abort(404)
@@ -561,7 +572,7 @@ def delete_goals(user_id):
 
         return jsonify({
             'success': True,
-            'id': goal.id + ''
+            'id': goal.id
         }), 200
 
     else:

@@ -261,7 +261,6 @@ class Participants(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'joint_member_id': self.joint_member_id,
-            'user_id': self.user_id,
             'nickname': self.nickname
         }
 
