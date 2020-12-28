@@ -1,7 +1,7 @@
 from app import db
 from datetime import datetime
 import simplejson as json
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class Users(db.Model):
     __tablename__ = 'users'
@@ -152,7 +152,7 @@ class Goals(db.Model):
     joint_members = db.Column(db.ARRAY(db.Integer()), nullable=True,
                               default='{}')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    completed = db.Column(db.Boolean(), nullable=False, default=False)
+    completed = db.Column(db.Boolean(), nullable=True, default=False)
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
 
