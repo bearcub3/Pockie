@@ -139,6 +139,11 @@ def delete_user(user_id):
         abort(404)
 
     if user:
+        partner = Participants.query.filter(Participants.joint_member_id == user_id).one_or_none()
+
+        if partner:
+            partner.delete()
+
         user.delete()
 
         return jsonify({
