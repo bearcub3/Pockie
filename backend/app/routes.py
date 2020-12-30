@@ -324,10 +324,12 @@ def get_weekly_result(user_id):
 
                     expenses_result = []
                     incomes_result = []
+                    savings_result = []
 
                     for week in range(0, past_weeks + 1):
                         weekly_expenses = []
                         weekly_incomes = []
+                        weekly_savings = []
 
                         for idx, day in enumerate(monthly[week]):
                             expenses = Expenses.query.filter(
@@ -338,11 +340,20 @@ def get_weekly_result(user_id):
                                 and_(func.date(Incomes.created) == day,
                                      Incomes.user_id == user_id)).all()
 
+                            savings = Savings.query.filter(
+                                and_(func.date(Savings.created) == day,
+                                     Savings.user_id == user_id)).all()
+
+
                             filtered_expenses = [expense.format()
                                                for expense in expenses]
 
                             filtered_incomes = [income.format()
                                                for income in incomes]
+
+                            filtered_savings = [saving.format()
+                                               for saving in savings]
+
 
                             if len(filtered_expenses) == 0:
                                 weekly_expenses.append({f'{day}': None})
@@ -358,12 +369,22 @@ def get_weekly_result(user_id):
                                 weekly_incomes.append(
                                     {f'{day}': filtered_incomes})
 
+                            if len(filtered_savings) == 0:
+                                weekly_savings.append({f'{day}': None})
+
+                            elif len(filtered_savings) > 0:
+                                weekly_savings.append(
+                                    {f'{day}': filtered_savings})
+
                         expenses_result.append(weekly_expenses)
                         incomes_result.append(weekly_incomes)
+                        savings_result.append(weekly_savings)
+
 
             return jsonify({
                 'weekly_expense': expenses_result,
                 'weekly_income': incomes_result,
+                'weekly_saving': savings_result,
             }), 200
 
         elif user is None:
@@ -596,13 +617,13 @@ def delete_goals(goal_id):
 saving data
 '''
 
-
 @app.route('/api/savings', methods=['POST'])
 def save_money():
     try:
         body = request.get_json()
 
         goal_id = body['goal_id']
+        user_id = body['user_id']
         amount = body['amount']
 
         goal = Goals.query.filter(Goals.id == goal_id).first()
@@ -613,7 +634,7 @@ def save_money():
             goal.completed = True
             goal.update()
 
-        saving = Savings(goal_id=goal_id, amount=amount)
+        saving = Savings(goal_id=goal_id, user_id=user_id, amount=amount)
         saving.insert()
 
         return jsonify({

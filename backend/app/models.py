@@ -24,6 +24,9 @@ class Users(db.Model):
     goal = db.relationship(
         'Goals',
         backref=db.backref('users', cascade="save-update"), lazy=True)
+    saving = db.relationship(
+        'Savings',
+        backref=db.backref('users', cascade="save-update"), lazy=True)
     participants = db.relationship(
         'Participants', backref=db.backref('users', cascade="save-update"))
 
@@ -201,12 +204,14 @@ class Savings(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     amount = db.Column(db.Numeric(), nullable=False)
     created = db.Column(db.DateTime, nullable=False,
                         default=datetime.utcnow)
 
-    def __init__(self, goal_id, amount):
+    def __init__(self, goal_id, user_id, amount):
         self.goal_id = goal_id
+        self.user_id = user_id
         self.amount = amount
 
     def insert(self):
@@ -223,6 +228,7 @@ class Savings(db.Model):
     def format(self):
         return {
             'id': self.id,
+            'user_id': self.user_id,
             'goal_id': self.goal_id,
             'amount': json.dumps(self.amount),
         }
