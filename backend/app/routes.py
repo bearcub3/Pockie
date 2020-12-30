@@ -387,6 +387,7 @@ def get_monthly_result(user_id):
                 'month': month,
                 'monthly_expense': 0,
                 'monthly_income': 0,
+                'monthly_saving': 0,
             }
 
             monthly_expenses = Expenses.query.\
@@ -397,11 +398,18 @@ def get_monthly_result(user_id):
                 filter(and_(extract('year', Incomes.created) == year,
                             extract('month', Incomes.created) == month)).all()
 
+            monthly_savings = Savings.query.\
+                filter(and_(extract('year', Savings.created) == year,
+                            extract('month', Savings.created) == month)).all()
+
             result['monthly_expense'] = sum(expense.amount
                                             for expense in monthly_expenses)
 
             result['monthly_income'] = sum(income.amount
                                            for income in monthly_incomes)
+
+            result['monthly_saving'] = sum(saving.amount
+                                           for saving in monthly_savings)
 
             return jsonify(result), 200
 
