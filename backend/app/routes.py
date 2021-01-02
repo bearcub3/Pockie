@@ -692,6 +692,7 @@ def get_saving_status(user_id):
         # data format for result
         detail = {
             'goal_id': goal.id,
+            'goal_purpose': goal.purpose,
             'goal_amount': goal.amount,
             'current_saving': total,
             'joint_members': goal.joint_members,
