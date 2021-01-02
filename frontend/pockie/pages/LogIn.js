@@ -1,27 +1,17 @@
 import React, { Component } from 'react';
-import { View, Image } from 'react-native';
-import {
-	colors,
-	Row,
-	Label,
-	Input,
-	Button,
-	ButtonText,
-	Welcome
-} from '../utils/theme';
+import { colors, Row, Label, Input, Button, ButtonText } from '../utils/theme';
 
+import { connect } from 'react-redux';
+
+import Header from '../components/Header';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Layout from '../components/Layout';
 import Error from '../components/Error';
 
+import { userActions } from '../actions';
 import { signIn } from '@okta/okta-react-native';
 
-const image = {
-	width: 298,
-	height: 210
-};
-
-export default class LogIn extends Component {
+class LogIn extends Component {
 	constructor(props) {
 		super(props);
 
@@ -39,15 +29,21 @@ export default class LogIn extends Component {
 		this.setState({ progress: true });
 
 		const { username, password } = this.state;
-		const { navigation } = this.props;
+		const { navigation, getUser } = this.props;
 		signIn({ username, password })
 			.then((token) => {
+				if (username.includes('a.smith')) {
+					getUser(2);
+				} else {
+					getUser(1);
+				}
+
 				this.setState(
 					{
 						progress: false,
 						username: '',
 						password: '',
-						error: ''
+						error: '',
 					},
 					() => navigation.navigate('Profile')
 				);
@@ -61,22 +57,17 @@ export default class LogIn extends Component {
 		const { progress, error } = this.state;
 		return (
 			<Layout>
-				<View style={{ height: '45%' }}>
-					<Image
-						source={require('../assets/images/initial_context.png')}
-						style={image}
-					/>
-				</View>
-				<Welcome>WELCOME TO POCKIE</Welcome>
+				<Header title="Log In" />
+
+				<Spinner
+					visible={progress}
+					textContent={'Loading...'}
+					textStyle={{
+						color: '#000'
+					}}
+				/>
+				<Error error={error} />
 				<Row>
-					<Spinner
-						visible={progress}
-						textContent={'Loading...'}
-						textStyle={{
-							color: '#000'
-						}}
-					/>
-					<Error error={error} />
 					<Label>Email Address</Label>
 					<Input
 						onChangeText={(username) => this.setState({ username })}
@@ -99,3 +90,14 @@ export default class LogIn extends Component {
 		);
 	}
 }
+
+function mapStateToProps(state) {
+	const { user, finance } = state.authentication;
+	return { user, finance };
+}
+
+const actionCreators = {
+	getUser: userActions.getUserData
+};
+
+export default connect(mapStateToProps, actionCreators)(LogIn);

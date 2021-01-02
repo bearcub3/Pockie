@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useContext } from 'react';
+import { View, Text, TouchableHighlight } from 'react-native';
 import styled from 'emotion-native-extended';
 
-import { colors, fonts } from '../utils/theme';
+import { colors, fonts, chart } from '../utils/theme';
 
 const Button = styled.TouchableHighlight`
 	width: 100%;

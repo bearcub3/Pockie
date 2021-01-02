@@ -1,2 +1,2 @@
-import { showLoading, hideLoading } from 'react-redux-loading-bar';
-export * from './user.action'
+export * from './user.actions';
+export * from './update.actions';

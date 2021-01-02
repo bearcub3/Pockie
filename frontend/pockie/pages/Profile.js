@@ -1,23 +1,22 @@
-import React, { Component } from 'react';
-import {
-	View,
-	Image,
-	ScrollView,
-	Dimensions,
-	TouchableHighlight
-} from 'react-native';
+import React from 'react';
+import { View, Image, ScrollView, TouchableHighlight } from 'react-native';
 import styled from 'emotion-native-extended';
+import { connect } from 'react-redux';
 
-import { getAccessToken, getUser } from '@okta/okta-react-native';
-
-// import ToggleSwitch from 'toggle-switch-react-native';
-
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { VictoryPie } from 'victory-native';
 
-import { colors, fonts, chart, Button, ButtonText } from '../utils/theme';
+import {
+	colors,
+	fonts,
+	chart,
+	Button,
+	ButtonText,
+	TagBG,
+	TagText
+} from '../utils/theme';
 import Layout from '../components/Layout';
-// import Todays from '../components/Todays';
+import Todays from '../components/Todays';
 import ScreenLayout from '../components/ScreenLayout';
 
 const ProfileHeader = styled.View`
@@ -46,24 +45,36 @@ const Goals = styled.Text`
 	color: ${colors.green};
 `;
 
+const InviteButton = styled.TouchableHighlight`
+	background-color: ${colors.blue1};
+	border-radius: 10px;
+	width: 30%;
+	position: relative;
+	top: -40px;
+	right: -70%;
+`;
+
+const InviteContainer = styled.View`
+	flex-direction: row;
+	padding: 10px;
+	align-items: center;
+`;
+
+const InviteText = styled.Text`
+	font-family: ${fonts.normal};
+	font-size: 14;
+	color: ${colors.white};
+	margin-left: 10px;
+`;
+
 const image = {
 	width: 130,
-	height: 130
+	height: 130,
 };
 
 const userFinanceData = {
-	expense: 503.65,
-	income: 0,
-	currentRate: 1500
+	currentRate: 1472.03
 };
-
-// TODO: modelling the expense API /api/expense/:id  'GET'
-// probably retrieving data from api up to 6 months from today
-// retrieve all the expense data filtered by the date which meets the condition above
-// aggregate the data based on each expense key value
-// sum up the total expenses of the total 6 months
-// sum up the total expenses of each category
-// calculate the percentage of expense
 
 const userExpenseData = {
 	'House, Bills, Taxes': 50,
@@ -73,27 +84,8 @@ const userExpenseData = {
 	'Transportation, Car': 4,
 	Healthcare: 3,
 	Personal: 10,
-	Etc: 3,
+	Etc: 3
 };
-
-// TODO: create saving model API /api/goals  'POST', 'GET'
-// mapStateToProps
-// saving goals screen => createNativeStackNavigator
-
-const goalsData = [
-	{
-		purpose: 'Personal',
-		amount: 600,
-		current: 260,
-		due: '6 months', // not sure about the data format
-	},
-	{
-		purpose: 'Buying a house',
-		amount: 5000,
-		current: 1580,
-		due: '12 months', // not sure about the data format
-	}
-];
 
 const WaveEmoji = () => (
 	<Image
@@ -112,7 +104,7 @@ function Settings({ navigate }) {
 				width: 40,
 				height: 40,
 				borderRadius: 30,
-				backgroundColor: `${colors.white}`
+				backgroundColor: `${colors.white}`,
 			}}
 			onPress={() => navigate()}>
 			<Ionicons name="md-settings" size={25} color={colors.grey1} />
@@ -120,167 +112,165 @@ function Settings({ navigate }) {
 	);
 }
 
-export default class Profile extends Component {
-	// const [whichCurrency, setConversion] = useState(false);
-	// const windowWidth = Dimensions.get('window').width;
-	// const [hasUser, setUser] = useState(null);
-	constructor(props) {
-		super(props);
+const conversion = (value) => {
+	let result = (value * userFinanceData.currentRate).toFixed(0);
+	// TO-DO: toLocaleString doesn't work on React Native. need to find a way to work around
+	return result;
+};
 
-		this.state = {
-			user: null,
-			progress: true,
-			token: '',
-			error: '',
-		};
+function Profile({ navigation, user, today, goals, participants, savings }) {
+	const goToSettings = () => navigation.navigate('Settings');
+	const goToGoals = () => navigation.navigate('Goals');
 
-		this.navigate = this.navigate.bind(this);
-	}
-
-	navigate() {
-		this.props.navigation.navigate('Settings');
-	}
-
-	componentDidMount() {
-		this.setState({ progress: true });
-
-		Promise.all([getAccessToken(), getUser()])
-			.then(([token, user]) =>
-				this.setState({
-					progress: false,
-					user,
-					token: token.access_token,
-				})
-			)
-			.catch((e) => {
-				this.setState({ progress: false, error: e.message });
-			});
-	}
-
-	render() {
-		const { token, user } = this.state;
-
-		console.log('USER', user);
-		console.log('TOKEN', token);
-		return (
-			<ScrollView style={{ backgroundColor: `${colors.white}` }}>
-				<ProfileHeader>
-					<View
-						style={{
-							flex: 1,
-							position: 'absolute',
-							top: 40,
-							left: -10
-						}}>
-						{/* <ToggleSwitch
-                        isOn={whichCurrency}
-                        onColor={colors.blue1}
-                        offColor={colors.blue2}
-                        label={user.currenty === 'GBP' ? '£' : '₩'}
-                        labelStyle={whichCurrency? { color: `${colors.white}`, fontSize: 11, position: `relative`, zIndex: 1, left: 25 } : { color: `${colors.white}`, fontSize: 11, position: `relative`, zIndex: 1, left: 50 }}
-                        size="medium"
-                        onToggle={isOn => setConversion(!whichCurrency)}
-                    /> */}
-					</View>
-					<View
-						style={{
-							flex: 1,
-							position: 'absolute',
-							top: 33,
-							right: 20
-						}}>
-						<Settings navigate={this.navigate} />
-					</View>
-				</ProfileHeader>
+	return (
+		<ScrollView style={{ backgroundColor: `${colors.white}` }}>
+			<ProfileHeader>
 				<View
 					style={{
-						marginTop: -70,
-						alignItems: 'center',
-						zIndex: -1,
+						flex: 1,
+						position: 'absolute',
+						top: 40,
+						left: -10
+					}}
+				/>
+				<View
+					style={{
+						flex: 1,
+						position: 'absolute',
+						top: 33,
+						right: 20
 					}}>
-					<Image
-						source={require('../assets/images/avatar.png')}
-						style={image}
-					/>
-					<View style={{ position: 'relative' }}>
-						<UserName>
-							{user && `Hello, ${user.given_name}!`}
-						</UserName>
-						<WaveEmoji />
+					<Settings navigate={goToSettings} />
+				</View>
+			</ProfileHeader>
+			<View
+				style={{
+					marginTop: -70,
+					alignItems: 'center',
+					zIndex: -1,
+				}}>
+				<Image
+					source={require('../assets/images/avatar.png')}
+					style={image}
+				/>
+				<View style={{ position: 'relative' }}>
+					<UserName>
+						{user && `Hello, ${user.name.first_name}!`}
+					</UserName>
+					<WaveEmoji />
+				</View>
+			</View>
+			<Layout>
+				<View style={{ flexDirection: 'row', marginBottom: 15 }}>
+					<View
+						style={{
+							flexDirection: 'column',
+							width: '48.5%',
+							marginRight: 10
+						}}>
+						{today && (
+							<Todays
+								title="Expense"
+								amount={today.expenses}
+								conversion={conversion(today.expenses)}
+							/>
+						)}
+					</View>
+					<View style={{ flexDirection: 'column', width: '48.5%' }}>
+						{today && (
+							<Todays
+								title="Income"
+								amount={today.incomes}
+								conversion={conversion(today.incomes)}
+							/>
+						)}
 					</View>
 				</View>
-				<Layout>
-					<View style={{ flexDirection: 'row', marginBottom: 15 }}>
-						<View
+				{/* spending pattern */}
+				<ScreenLayout category="Spending Pattern">
+					<View style={{ position: 'relative', left: -35 }}>
+						<VictoryPie
+							colorScale={[
+								`${chart.color1}`,
+								`${chart.color2}`,
+								`${chart.color5}`,
+								`${chart.color4}`,
+								`${chart.color6}`,
+								`${chart.color7}`,
+								`${chart.color3}`,
+								`${chart.color8}`
+							]}
+							innerRadius={30}
+							labelRadius={({ innerRadius }) => innerRadius + 10}
+							data={[
+								{ x: 'House, Bills, Taxes', y: 50 },
+								{ x: 'Grocery', y: 15 },
+								{ x: 'Shopping', y: 5 },
+								{ x: 'Entertainment', y: 10 },
+								{ x: 'Transportation, Car', y: 4 },
+								{ x: 'Healthcare', y: 3 },
+								{ x: 'Personal', y: 10 },
+								{ x: 'Etc', y: 3 }
+							]}
+							labelPlacement="parallel"
 							style={{
-								flexDirection: 'column',
-								width: '48.5%',
-								marginRight: 10
-							}}>
-							{/* <Todays title="Expense" amount={userFinanceData.expense} conversion={conversion(userFinanceData.expense)} /> */}
-						</View>
-						<View
-							style={{ flexDirection: 'column', width: '48.5%' }}>
-							{/* <Todays title="Income" amount={userFinanceData.income} conversion={conversion(userFinanceData.income)} /> */}
-						</View>
+								labels: { fill: 'white', fontSize: 12 },
+							}}
+						/>
 					</View>
-					{/* spending pattern */}
-					<ScreenLayout category="Spending Pattern">
-						<View style={{ position: 'relative', left: -35 }}>
-							<VictoryPie
-								colorScale={[
-									`${chart.color1}`,
-									`${chart.color2}`,
-									`${chart.color5}`,
-									`${chart.color4}`,
-									`${chart.color6}`,
-									`${chart.color7}`,
-									`${chart.color3}`,
-									`${chart.color8}`
-								]}
-								innerRadius={30}
-								labelRadius={({ innerRadius }) =>
-									innerRadius + 10
-								}
-								data={[
-									{ x: 'House, Bills, Taxes', y: 50 },
-									{ x: 'Grocery', y: 15 },
-									{ x: 'Shopping', y: 5 },
-									{ x: 'Entertainment', y: 10 },
-									{ x: 'Transportation, Car', y: 4 },
-									{ x: 'Healthcare', y: 3 },
-									{ x: 'Personal', y: 10 },
-									{ x: 'Etc', y: 3 }
-								]}
-								labelPlacement="parallel"
-								style={{
-									labels: { fill: 'white', fontSize: 12 },
-								}}
-							/>
-						</View>
-					</ScreenLayout>
-					{/* saving goals */}
-					<ScreenLayout category="Saving Goals">
-						<PlainText>
-							You have <Goals>{goalsData.length}</Goals> saving
-							goal
-							{goalsData.length > 1 && 's'}.
-						</PlainText>
-						<TouchableHighlight
+				</ScreenLayout>
+				{/* saving goals */}
+				<ScreenLayout category="Saving Goals">
+					<PlainText>
+						You have <Goals>{goals && goals.length}</Goals> saving
+						goal
+						{goals && goals.length > 1 && 's'}.
+					</PlainText>
+					<Button bgcolor={colors.green} onPress={goToGoals}>
+						<ButtonText color={colors.white}>
+							SHOW ME GOALS
+						</ButtonText>
+					</Button>
+				</ScreenLayout>
+				{/* finance partner */}
+				<ScreenLayout category="Fianace Partner">
+					<>
+						<InviteButton
 							onPress={() =>
-								navigation.navigate('Your Saving Goals')
+								navigation.navigate('Participant', {
+									userId: user.id
+								})
 							}>
-							<Button bgcolor={colors.green}>
-								<ButtonText color={colors.white}>
-									SET A GOAL
-								</ButtonText>
-							</Button>
-						</TouchableHighlight>
-					</ScreenLayout>
-					{/* finance partner */}
-					<ScreenLayout category="Fianace Partner" />
-				</Layout>
-			</ScrollView>
-		);
-	}
+							<InviteContainer>
+								<AntDesign
+									name="addusergroup"
+									size={24}
+									color={colors.white}
+								/>
+								<InviteText>INVITE</InviteText>
+							</InviteContainer>
+						</InviteButton>
+						<View style={{ flexDirection: 'row' }}>
+							{participants &&
+								participants.length > 0 &&
+								participants.map((participant, idx) => (
+									<TagBG key={participant.nickname}>
+										<TagText>
+											{participant.nickname.toUpperCase()}
+										</TagText>
+									</TagBG>
+								))}
+						</View>
+					</>
+				</ScreenLayout>
+			</Layout>
+		</ScrollView>
+	);
 }
+
+function mapStateToProps(state) {
+	const { user, today, goals, participants, savings } = state.authentication;
+	return { user, today, goals, participants, savings };
+}
+
+export default connect(mapStateToProps)(Profile);

@@ -6,7 +6,6 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import Layout from '../components/Layout';
 import Error from '../components/Error';
 
-import EncryptedStorage from 'react-native-encrypted-storage';
 import { clearTokens } from '@okta/okta-react-native';
 
 export default class Settings extends Component {
@@ -15,7 +14,7 @@ export default class Settings extends Component {
 
 		this.state = {
 			progress: false,
-			error: ''
+			error: '',
 		};
 
 		this.logout = this.logout.bind(this);
@@ -24,9 +23,6 @@ export default class Settings extends Component {
 	logout() {
 		this.setState({ progress: true });
 		const { navigation } = this.props;
-		async () => {
-			await EncryptedStorage.removeItem('accessToken');
-		};
 
 		clearTokens()
 			.then(() => {
@@ -50,7 +46,7 @@ export default class Settings extends Component {
 						visible={progress}
 						textContent={'Loading...'}
 						textStyle={{
-							color: '#000',
+							color: '#000'
 						}}
 					/>
 					<Error error={error} />

@@ -11,7 +11,7 @@ export default function SubLayout({ prev, title, children }) {
 				<TouchableWithoutFeedback onPress={() => prev.goBack()}>
 					<AntDesign name="arrowleft" size={35} color="black" />
 				</TouchableWithoutFeedback>
-				<View style={{ marginTop: 50 }}>
+				<View style={{ marginTop: 35 }}>
 					<Title>Your</Title>
 					<Title>{title}</Title>
 				</View>

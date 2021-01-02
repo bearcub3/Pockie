@@ -14,6 +14,8 @@ target 'pockie' do
 
   pod 'OktaSdkBridgeReactNative', :path => '../node_modules/@okta/okta-react-native'
 
+  pod 'RNCAsyncStorage', :path => '../node_modules/@react-native-async-storage/async-storage'
+
   target 'pockieTests' do
     inherit! :complete
     # Pods for testing

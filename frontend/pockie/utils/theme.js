@@ -56,7 +56,7 @@ export const Welcome = styled.Text`
 `;
 
 export const Header = styled.View`
-	margin: 40px 0 20px 20px;
+	margin: 30px 0 20px 20px;
 `;
 
 export const Title = styled.Text`
@@ -97,5 +97,19 @@ export const Button = styled.TouchableOpacity`
 export const ButtonText = styled.Text`
 	font-family: ${fonts.main};
 	font-size: 18;
+	color: ${(props) => props.color};
+`;
+
+export const StateTitleText = styled.Text`
+	font-family: ${fonts.main};
+	font-size: ${(props) => props.size};
+	color: ${colors.black};
+	margin-top: -10;
+	padding: 0;
+`;
+
+export const StateNumber = styled.Text`
+	font-family: ${fonts.normal};
+	font-size: ${(props) => props.size};
 	color: ${(props) => props.color};
 `;

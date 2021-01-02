@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import styled from 'emotion-native-extended';
 
 import { colors, fonts } from '../utils/theme';
+import { isNumeric } from '../utils/helper';
 
 const Box = styled.View`
 	width: 100%;
@@ -10,7 +11,6 @@ const Box = styled.View`
 	background-color: ${colors.white};
 	border-radius: 10px;
 	elevation: 2;
-	shadowcolor: ${colors.grey1};
 `;
 
 const Title = styled.Text`
@@ -37,9 +37,20 @@ const Conversion = styled.Text`
 `;
 
 export default function Todays({ title, amount, conversion }) {
-	const numbers = amount.toString().split('.');
-	const integer = numbers[0];
-	const decimal = numbers[1];
+	const [integer, setInteger] = useState(null);
+	const [decimal, setDecimal] = useState(null);
+
+	useEffect(() => {
+		if (amount !== undefined) {
+			if (!isNumeric(amount)) {
+				const numbers = amount.toString().split('.');
+				setInteger(numbers[0]);
+				setDecimal(numbers[1]);
+			} else {
+				setInteger(amount);
+			}
+		}
+	}, [amount]);
 
 	return (
 		<Box>
@@ -51,7 +62,7 @@ export default function Todays({ title, amount, conversion }) {
 				style={{
 					flexDirection: 'row',
 					alignItems: 'center',
-					justifyContent: 'flex-end'
+					justifyContent: 'flex-end',
 				}}>
 				<Text
 					style={
@@ -60,13 +71,13 @@ export default function Todays({ title, amount, conversion }) {
 									color: `${colors.blue1}`,
 									fontFamily: `${fonts.normal}`,
 									fontSize: 16,
-									marginRight: 5
+									marginRight: 5,
 							  }
 							: {
 									color: `${colors.red}`,
 									fontFamily: `${fonts.normal}`,
 									fontSize: 16,
-									marginRight: 5
+									marginRight: 5,
 							  }
 					}>
 					£

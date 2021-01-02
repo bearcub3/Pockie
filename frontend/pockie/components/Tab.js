@@ -28,7 +28,7 @@ export default function Tab({ handleActive, active }) {
 				flexDirection: 'row',
 				marginLeft: 20,
 				marginRight: 20,
-				marginBottom: 20
+				marginBottom: 20,
 			}}>
 			{tabs.map((tab, idx) => (
 				<TabButton
@@ -41,11 +41,11 @@ export default function Tab({ handleActive, active }) {
 						idx === 0
 							? {
 									borderTopLeftRadius: 5,
-									borderBottomLeftRadius: 5
+									borderBottomLeftRadius: 5,
 							  }
 							: {
 									borderTopRightRadius: 5,
-									borderBottomRightRadius: 5
+									borderBottomRightRadius: 5,
 							  }
 					}>
 					<TabText

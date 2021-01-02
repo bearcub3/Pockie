@@ -1,7 +1,5 @@
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
-import { Text } from 'react-native';
-
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import rootReducer from './reducers';
@@ -18,28 +16,32 @@ import {
 	Poppins_500Medium,
 	Poppins_600SemiBold,
 	Poppins_700Bold,
-	Roboto_400Regular
+	Roboto_400Regular,
 } from '@expo-google-fonts/dev';
+
+import Splash from './assets/images/pockie-splash.svg';
 
 const store = createStore(rootReducer, middlewares);
 
 const Stack = createStackNavigator();
 const Tab = createMaterialBottomTabNavigator();
 
+import Entry from './pages/Entry';
 import LogIn from './pages/LogIn';
 import Profile from './pages/Profile';
 import SignUp from './pages/SignUp';
-// import Status from './Status';
-// import Record from './Record';
-// import Goals from './Goals';
+import Goals from './pages/Goals';
 import Settings from './pages/Settings';
+import Participant from './pages/Participant';
+import States from './pages/States';
+import Record from './pages/Record';
 
 import { isAuthenticated } from '@okta/okta-react-native';
 
 const STACKS = {
 	Profile: { title: 'Profile', component: Profile, icon: 'user' },
-	// Status: { title: 'Status', component: Status, icon: 'calendar' },
-	// Record: { title: 'Record', component: Record, icon: 'plus' },
+	Record: { title: 'Record', component: Record, icon: 'plus' },
+	States: { title: 'States', component: States, icon: 'calendar' }
 };
 
 const BottomTab = () => (
@@ -47,12 +49,12 @@ const BottomTab = () => (
 		initialRouteName="Profile"
 		labeled={false}
 		barStyle={{
-			backgroundColor: colors.white
+			backgroundColor: colors.white,
 		}}
 		activeColor={colors.blue1}
 		tabBarOptions={{
 			style: {
-				height: 50
+				height: 50,
 			}
 		}}>
 		{Object.keys(STACKS).map((name) => (
@@ -67,7 +69,7 @@ const BottomTab = () => (
 							size={24}
 							color={color}
 						/>
-					)
+					),
 				}}
 			/>
 		))}
@@ -75,11 +77,13 @@ const BottomTab = () => (
 );
 
 const SCREENS = {
-	Home: { title: 'Log In', component: LogIn },
+	Home: { title: 'Entry', component: Entry },
+	LogIn: { title: 'Log In', component: LogIn },
 	SignUp: { title: 'Sign Up', component: SignUp },
 	Profile: { title: 'Profile', component: BottomTab },
-	Settings: { title: 'Settings', component: Settings }
-	// Goals: { title: 'Your Saving Goals', component: Goals }
+	Settings: { title: 'Settings', component: Settings },
+	Goals: { title: 'Your Saving Goals', component: Goals },
+	Participant: { title: 'Save Together! save More!', component: Participant },
 };
 
 export default function App() {
@@ -87,28 +91,24 @@ export default function App() {
 		Poppins_500Medium,
 		Poppins_600SemiBold,
 		Poppins_700Bold,
-		Roboto_400Regular
+		Roboto_400Regular,
 	});
 
 	const [authenticated, setAuthenticated] = useState(false);
 	const [progress, setProgress] = useState(false);
 
-	const checkAuthStatus = async () => {
-		const { auth } = await isAuthenticated();
-		if (auth === undefined) {
-			setAuthenticated(false);
-		} else {
-			setAuthenticated(auth);
-		}
-		setProgress(false);
-	};
-
 	useEffect(() => {
 		setProgress(true);
-		checkAuthStatus();
+		async () => {
+			const { auth } = await isAuthenticated();
+			if (auth === undefined) {
+				setAuthenticated(false);
+			} else {
+				setAuthenticated(auth);
+			}
+			setProgress(false);
+		};
 	}, [authenticated]);
-
-	console.log('authenticated', authenticated);
 
 	return (
 		<Provider store={store}>
@@ -126,7 +126,7 @@ export default function App() {
 
 								acc[name] = {
 									path,
-									screens: {},
+									screens: {}
 								};
 								// console.log(acc);
 								return acc;
@@ -134,14 +134,14 @@ export default function App() {
 							{
 								Home: {
 									screens: {
-										LogIn: 'home',
-									},
+										Entry: 'home'
+									}
 								},
 							}
-						),
-					}
+						)
+					},
 				}}
-				fallback={<Text>Loading...</Text>}>
+				fallback={<Splash />}>
 				<Stack.Navigator initialRouteName="Home" headerMode="screen">
 					{Object.keys(SCREENS).map((name) => (
 						<Stack.Screen
