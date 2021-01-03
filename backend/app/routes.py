@@ -437,8 +437,47 @@ def get_monthly_result(user_id):
         elif user is None:
             abort(404)
 
-    except BaseException:
+    except:
         abort(500)
+
+
+@app.route('/api/monthly/pattern/<int:user_id>')
+def get_pattern(user_id):
+    try:
+        types = { 'total_expense': 0 }
+        user = Users.query.filter(Users.id == user_id).one_or_none()
+
+        if user:
+            today = date.today()
+            year = today.year
+            first = today.replace(day=1)
+            last_month_day = first - timedelta(days=1)
+            last_month = last_month_day.month
+
+            if today.month == 1:
+                year = year - 1
+
+            last_month_expenses = Expenses.query.\
+                filter(and_(extract('year', Expenses.created) == year,
+                            extract('month', Expenses.created) == last_month)).all()
+
+            for expense in last_month_expenses:
+                types['total_expense'] += expense.amount 
+
+                if expense.type in types:
+                    types[expense.type] += expense.amount
+
+                else:
+                    types[expense.type] = expense.amount
+                
+            return jsonify(types), 200
+
+        elif user is None:
+            abort(404)
+
+    except:
+        abort(500)
+    
 
 
 @app.route('/api/expense/<int:user_id>', methods=['DELETE'])
