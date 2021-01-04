@@ -8,6 +8,7 @@ export const financeService = {
 	getSavings,
 	getWeekly,
 	getMonthly,
+	getExpensePattern,
 };
 
 function getToday(user_id) {
@@ -15,6 +16,14 @@ function getToday(user_id) {
 		.then(handleResponse)
 		.then((today) => {
 			return today;
+		});
+}
+
+function getExpensePattern(user_id) {
+	return fetch(`${API_URL}/api/monthly/pattern/${user_id}`, getRequestOption)
+		.then(handleResponse)
+		.then((pattern) => {
+			return pattern;
 		});
 }
 

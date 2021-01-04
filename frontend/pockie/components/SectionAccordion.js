@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { connect } from 'react-redux';
 import styled from 'emotion-native-extended';
 
@@ -53,6 +53,7 @@ class SectionAccordion extends Component {
 			<View>
 				{section.content.map((item) => (
 					<View
+						key={item.type}
 						style={{
 							flexDirection: 'row',
 							justifyContent: 'space-between',
@@ -70,35 +71,34 @@ class SectionAccordion extends Component {
 		this.setState({ activeSections });
 	};
 
-	render() {
-		const { category, totals, purpose, currentIndex } = this.props;
-		function typeGenerator(value) {
-			switch (value) {
-				case 0:
-					return purpose.map((item, idx) => ({
-						amount: item.amount,
-						type: expenseTypes[idx].label,
-					}));
-				case 1:
-					return purpose.map((item, idx) => ({
-						amount: item.amount,
-						type: incomeTypes[idx].label
-					}));
-				case 2:
-					return purpose.map((item, idx) => ({
-						amount: item.amount,
-						type: savingPurpose[idx].label,
-					}));
-			}
+	_typeGenerator = (value) => {
+		switch (value) {
+			case 0:
+				return this.props.purpose.map((item, idx) => ({
+					amount: item.amount,
+					type: expenseTypes[idx].label,
+				}));
+			case 1:
+				return this.props.purpose.map((item, idx) => ({
+					amount: item.amount,
+					type: incomeTypes[idx].label
+				}));
+			case 2:
+				return this.props.purpose.map((item, idx) => ({
+					amount: item.amount,
+					type: savingPurpose[idx].label,
+				}));
 		}
+	};
 
-		const types = purpose && typeGenerator(currentIndex);
+	render() {
+		const { category, totals, currentIndex } = this.props;
 
 		const SECTIONS = [
 			{
 				title: category,
 				total: totals || 0,
-				content: types || 'loading',
+				content: this._typeGenerator(currentIndex) || 'loading',
 			}
 		];
 

@@ -55,15 +55,18 @@ class LogIn extends Component {
 
 	render() {
 		const { progress, error } = this.state;
+		const { loadingState } = this.props;
+
 		return (
 			<Layout>
 				<Header title="Log In" />
 
 				<Spinner
-					visible={progress}
+					overlayColor="rgba(99, 168, 241, 0.7)"
+					visible={progress || loadingState}
 					textContent={'Loading...'}
 					textStyle={{
-						color: '#000'
+						color: colors.white,
 					}}
 				/>
 				<Error error={error} />
@@ -92,8 +95,8 @@ class LogIn extends Component {
 }
 
 function mapStateToProps(state) {
-	const { user, finance } = state.authentication;
-	return { user, finance };
+	const { user, finance, loadingState } = state.authentication;
+	return { user, finance, loadingState };
 }
 
 const actionCreators = {

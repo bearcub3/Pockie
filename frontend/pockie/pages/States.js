@@ -4,7 +4,12 @@ import styled from 'emotion-native-extended';
 import { connect } from 'react-redux';
 
 import DropDownPicker from 'react-native-dropdown-picker';
-import { VictoryBar, VictoryChart, VictoryTheme } from 'victory-native';
+import {
+	VictoryAxis,
+	VictoryBar,
+	VictoryChart,
+	VictoryTheme,
+} from 'victory-native';
 
 import { colors, fonts, StateTitleText, Row } from '../utils/theme';
 import {
@@ -12,6 +17,9 @@ import {
 	decimalPointGenerator,
 	colorsOfResult,
 	weeklyCategories,
+	yearlyIncome,
+	yearlyExpense,
+	yearlySaving
 } from '../utils/helper';
 
 import SubLayout from '../components/SubLayout';
@@ -36,12 +44,42 @@ const MonthText = styled.Text`
 	margin-top: -15;
 `;
 
-function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
+const KeyShape = styled.View`
+	background-color: ${(props) => props.color};
+	width: 12px;
+	height: 12px;
+	border-radius: 12px;
+`;
+
+const KeyText = styled.Text`
+	font-family: ${fonts.normal};
+	font-size: 14;
+	color: ${colors.black};
+	margin: 0 15px;
+`;
+
+function ascendingOrder(data) {
+	const array = data.sort((a, b) => a.data - b.data);
+	return array[array.length - 1].data;
+}
+
+const reducer = (accumulator, currentValue) => accumulator + currentValue;
+
+function States({
+	navigation,
+	user,
+	weeksOfMonth,
+	weekly,
+	monthly,
+	monthlyData,
+	filteredObj,
+	goals,
+}) {
 	const [active, setActive] = useState(0);
-	const [monthlyData, setMonthly] = useState(null);
 	const [current, setWeek] = useState(weekly.weekly_expense.length - 1);
 	const [totals, setTotal] = useState([]);
 	const [purpose, setPurpose] = useState(null);
+	const [yearly, setYearly] = useState([]);
 
 	const handleActive = (param) => setActive(param);
 
@@ -49,21 +87,6 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 		let totalExpense = 0;
 		let totalIncome = 0;
 		let totalSaving = 0;
-
-		const tempMonthly = Object.entries(monthly).filter(
-			(item, idx) => idx === 1 || idx === 2 || idx === 3
-		);
-		setMonthly(tempMonthly);
-
-		const categoriesList = weeklyCategories.map((category, idx) =>
-			weekly[category][current].filter(
-				(day) => day[Object.keys(day)[0]] !== null
-			)
-		);
-
-		const filteredObj = categoriesList.map((category, idx) =>
-			category.flatMap((day) => day[Object.keys(day)])
-		);
 
 		filteredObj.map((type, idx) =>
 			type.map((detail) => {
@@ -78,7 +101,7 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 				}
 			})
 		);
-		setTotal([totalExpense, totalIncome, totalSaving]);
+		setTotal((state) => [totalExpense, totalIncome, totalSaving]);
 
 		const details = filteredObj.map((type, idx) =>
 			type.map((detail) => {
@@ -99,7 +122,17 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 			})
 		);
 		setPurpose(details);
-	}, [monthly, weekly, current]);
+
+		const copyExpense = JSON.parse(JSON.stringify(yearlyExpense));
+		const copyIncome = JSON.parse(JSON.stringify(yearlyIncome));
+
+		const allSavings = yearlySaving.map(
+			(saving) => saving[Object.keys(saving)[1]]
+		);
+		const expense4Year = ascendingOrder(copyExpense);
+		const income4Year = ascendingOrder(copyIncome);
+		setYearly([expense4Year, income4Year, allSavings.reduce(reducer)]);
+	}, []);
 
 	return (
 		<SubLayout title="Finance State" prev={navigation}>
@@ -156,7 +189,7 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 									}
 								/>
 							)}
-							{weeklyCategories &&
+							{purpose &&
 								weeklyCategories.map((category, idx) => (
 									<SectionAccordion
 										key={category}
@@ -187,7 +220,7 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 								{monthly && monthly.month}
 							</MonthText>
 						</Row>
-						{monthly &&
+						{monthlyData &&
 							monthlyData.map((type, idx) => (
 								<Row
 									key={type[0]}
@@ -235,10 +268,109 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 						}}>
 						<Row
 							style={{
-								marginBottom: -5,
+								marginTop: -30,
 								alignItems: 'center',
-							}}
-						/>
+								justifyContent: 'center',
+							}}>
+							<VictoryChart
+								domainPadding={{ x: 15, y: 10 }}
+								theme={VictoryTheme.material}
+								animate={{
+									duration: 1000,
+									onLoad: { duration: 500 },
+									easeing: 'elasticInOut',
+								}}>
+								<VictoryAxis tickFormat={yearlyExpense.month} />
+								<VictoryAxis
+									dependentAxis
+									tickFormat={(x) => `£${x / 1000}k`}
+								/>
+								<VictoryBar
+									style={{ data: { fill: colors.red } }}
+									data={yearlyIncome}
+									x="month"
+									y="data"
+								/>
+								<VictoryBar
+									style={{ data: { fill: colors.blue1 } }}
+									data={yearlyExpense}
+									x="month"
+									y="data"
+								/>
+								<VictoryBar
+									style={{ data: { fill: colors.green } }}
+									data={yearlySaving}
+									x="month"
+									y="data"
+								/>
+							</VictoryChart>
+						</Row>
+						<Row
+							style={{
+								flexDirection: 'row',
+								justifyContent: 'center',
+								alignItems: 'center',
+								marginTop: -15,
+							}}>
+							<KeyShape color={colors.blue1} />
+							<KeyText>Expense</KeyText>
+							<KeyShape color={colors.red} />
+							<KeyText>Income</KeyText>
+							<KeyShape color={colors.green} />
+							<KeyText>Saving</KeyText>
+						</Row>
+						{yearly &&
+							yearly.map((type, idx) => (
+								<Row
+									key={type}
+									style={{
+										borderBottomWidth: 1,
+										borderBottomColor: colors.grey2,
+										flexDirection: 'row',
+										marginBottom: 0,
+										marginTop: 10
+									}}>
+									<View
+										style={{
+											flexDirection: 'column',
+											width: '25%',
+											justifyContent: 'center',
+										}}>
+										<StateTitleText size="13">
+											{idx !== 2
+												? 'The Highest'
+												: 'Total'}
+										</StateTitleText>
+										{idx === 0 && (
+											<StateTitleText size="20">
+												Expense
+											</StateTitleText>
+										)}
+										{idx === 1 && (
+											<StateTitleText size="20">
+												Income
+											</StateTitleText>
+										)}
+										{idx === 2 && (
+											<StateTitleText size="20">
+												Saving
+											</StateTitleText>
+										)}
+									</View>
+									<View
+										style={{
+											width: '75%',
+											flexDirection: 'row',
+											justifyContent: 'flex-end',
+											alignItems: 'center',
+										}}>
+										{decimalPointGenerator(
+											type,
+											colorsOfResult(idx)
+										)}
+									</View>
+								</Row>
+							))}
 					</View>
 				)}
 			</ScrollView>
@@ -247,7 +379,7 @@ function States({ navigation, user, weeksOfMonth, weekly, monthly, goals }) {
 }
 
 function mapStateToProps(state) {
-	const { user, weekly, monthly, goals, savings } = state.authentication;
+	const { user, weekly, monthly, goals } = state.authentication;
 
 	const weeksOfMonth = weekly.weekly_expense.map((week, idx) => {
 		if (idx === 0) {
@@ -273,12 +405,26 @@ function mapStateToProps(state) {
 		}
 	});
 
+	const monthlyData = Object.entries(monthly).filter(
+		(item, idx) => idx === 1 || idx === 2 || idx === 3
+	);
+
+	const categoriesList = weeklyCategories.map((category, idx) =>
+		weekly[category][0].filter((day) => day[Object.keys(day)[0]] !== null)
+	);
+
+	const filteredObj = categoriesList.map((category, idx) =>
+		category.flatMap((day) => day[Object.keys(day)])
+	);
+
 	return {
 		user,
 		weeksOfMonth,
 		weekly,
 		monthly,
-		goals,
+		monthlyData,
+		filteredObj,
+		goals
 	};
 }
 

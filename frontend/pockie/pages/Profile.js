@@ -1,5 +1,11 @@
-import React from 'react';
-import { View, Image, ScrollView, TouchableHighlight } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+	View,
+	Image,
+	ScrollView,
+	TouchableHighlight,
+	Text
+} from 'react-native';
 import styled from 'emotion-native-extended';
 import { connect } from 'react-redux';
 
@@ -9,12 +15,12 @@ import { VictoryPie } from 'victory-native';
 import {
 	colors,
 	fonts,
-	chart,
 	Button,
 	ButtonText,
 	TagBG,
-	TagText
+	TagText,
 } from '../utils/theme';
+import { expenseTypes } from '../utils/helper';
 import Layout from '../components/Layout';
 import Todays from '../components/Todays';
 import ScreenLayout from '../components/ScreenLayout';
@@ -67,24 +73,13 @@ const InviteText = styled.Text`
 	margin-left: 10px;
 `;
 
+const userFinanceData = {
+	currentRate: 1472.03,
+};
+
 const image = {
 	width: 130,
 	height: 130,
-};
-
-const userFinanceData = {
-	currentRate: 1472.03
-};
-
-const userExpenseData = {
-	'House, Bills, Taxes': 50,
-	Grocery: 15,
-	Shopping: 5,
-	Entertainment: 10,
-	'Transportation, Car': 4,
-	Healthcare: 3,
-	Personal: 10,
-	Etc: 3
 };
 
 const WaveEmoji = () => (
@@ -104,7 +99,7 @@ function Settings({ navigate }) {
 				width: 40,
 				height: 40,
 				borderRadius: 30,
-				backgroundColor: `${colors.white}`,
+				backgroundColor: `${colors.white}`
 			}}
 			onPress={() => navigate()}>
 			<Ionicons name="md-settings" size={25} color={colors.grey1} />
@@ -118,9 +113,44 @@ const conversion = (value) => {
 	return result;
 };
 
-function Profile({ navigation, user, today, goals, participants, savings }) {
+function Profile({
+	navigation,
+	user,
+	today,
+	goals,
+	participants,
+	savings,
+	pattern,
+	loadingState
+}) {
 	const goToSettings = () => navigation.navigate('Settings');
 	const goToGoals = () => navigation.navigate('Goals');
+	const [totalExpense, setTotalExpense] = useState(0);
+	const [spendingPattern, setSpendingPattern] = useState(null);
+
+	useEffect(() => {
+		if (pattern) {
+			const totalMedium = Object.entries(pattern).filter(
+				([key, value]) => key === 'total_expense'
+			);
+			const totalExpense = totalMedium.flatMap((item) => item)[1];
+			setTotalExpense(totalExpense);
+
+			let percentages = Object.entries(
+				pattern
+			).map(([key, value], idx) => [
+				key === 'total_expense' ? key : expenseTypes[idx].label,
+				((value / totalExpense) * 100).toFixed(1)
+			]);
+
+			const final = percentages.map((item) => ({
+				x: item[0],
+				y: +item[1],
+			}));
+
+			setSpendingPattern(final.slice(0, -1));
+		}
+	}, [pattern]);
 
 	return (
 		<ScrollView style={{ backgroundColor: `${colors.white}` }}>
@@ -130,7 +160,7 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 						flex: 1,
 						position: 'absolute',
 						top: 40,
-						left: -10
+						left: -10,
 					}}
 				/>
 				<View
@@ -138,7 +168,7 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 						flex: 1,
 						position: 'absolute',
 						top: 33,
-						right: 20
+						right: 20,
 					}}>
 					<Settings navigate={goToSettings} />
 				</View>
@@ -153,6 +183,7 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 					source={require('../assets/images/avatar.png')}
 					style={image}
 				/>
+
 				<View style={{ position: 'relative' }}>
 					<UserName>
 						{user && `Hello, ${user.name.first_name}!`}
@@ -166,7 +197,7 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 						style={{
 							flexDirection: 'column',
 							width: '48.5%',
-							marginRight: 10
+							marginRight: 10,
 						}}>
 						{today && (
 							<Todays
@@ -190,34 +221,23 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 				<ScreenLayout category="Spending Pattern">
 					<View style={{ position: 'relative', left: -35 }}>
 						<VictoryPie
-							colorScale={[
-								`${chart.color1}`,
-								`${chart.color2}`,
-								`${chart.color5}`,
-								`${chart.color4}`,
-								`${chart.color6}`,
-								`${chart.color7}`,
-								`${chart.color3}`,
-								`${chart.color8}`
-							]}
+							colorScale={'qualitative'}
 							innerRadius={30}
-							labelRadius={({ innerRadius }) => innerRadius + 10}
-							data={[
-								{ x: 'House, Bills, Taxes', y: 50 },
-								{ x: 'Grocery', y: 15 },
-								{ x: 'Shopping', y: 5 },
-								{ x: 'Entertainment', y: 10 },
-								{ x: 'Transportation, Car', y: 4 },
-								{ x: 'Healthcare', y: 3 },
-								{ x: 'Personal', y: 10 },
-								{ x: 'Etc', y: 3 }
-							]}
+							labelRadius={({ innerRadius }) => innerRadius + 15}
+							data={spendingPattern}
 							labelPlacement="parallel"
 							style={{
-								labels: { fill: 'white', fontSize: 12 },
+								labels: {
+									fill: 'white',
+									fontSize: 12,
+								}
 							}}
 						/>
 					</View>
+					<Text style={{ color: colors.grey1 }}>
+						This pattern indicates your previous month's total
+						expense.
+					</Text>
 				</ScreenLayout>
 				{/* saving goals */}
 				<ScreenLayout category="Saving Goals">
@@ -238,7 +258,7 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 						<InviteButton
 							onPress={() =>
 								navigation.navigate('Participant', {
-									userId: user.id
+									userId: user.id,
 								})
 							}>
 							<InviteContainer>
@@ -269,8 +289,25 @@ function Profile({ navigation, user, today, goals, participants, savings }) {
 }
 
 function mapStateToProps(state) {
-	const { user, today, goals, participants, savings } = state.authentication;
-	return { user, today, goals, participants, savings };
+	const {
+		user,
+		today,
+		goals,
+		participants,
+		savings,
+		pattern,
+		loadingState
+	} = state.authentication;
+
+	return {
+		user,
+		today,
+		goals,
+		participants,
+		savings,
+		pattern,
+		loadingState
+	};
 }
 
 export default connect(mapStateToProps)(Profile);

@@ -11,24 +11,13 @@ export const colors = {
 	grey1: '#797979',
 	grey2: '#dcdcdc',
 	grey3: '#e5e5e5',
-	grey4: '#efefef',
+	grey4: '#efefef'
 };
 
 export const fonts = {
 	main: 'Poppins_600SemiBold',
 	normal: 'Poppins_500Medium',
-	plain: 'Roboto_400Regular',
-};
-
-export const chart = {
-	color1: '#076eda',
-	color2: '#fD6585',
-	color3: '#ff5247',
-	color4: '#04bb00',
-	color5: '#51c0bf',
-	color6: '#9467db',
-	color7: '#ffb529',
-	color8: '#ffdd00',
+	plain: 'Roboto_400Regular'
 };
 
 export const TagBG = styled.View`

@@ -2,7 +2,7 @@ import { userConstants } from '../constants';
 import { userService, financeService } from '../_services';
 
 export const userActions = {
-	getUserData,
+	getUserData
 };
 
 function getUserData(userid) {
@@ -16,7 +16,8 @@ function getUserData(userid) {
 			financeService.getParticipants(userid),
 			financeService.getSavings(userid),
 			financeService.getWeekly(userid),
-			financeService.getMonthly(userid)
+			financeService.getMonthly(userid),
+			financeService.getExpensePattern(userid),
 		]).then(
 			(value) => {
 				dispatch(
@@ -27,7 +28,8 @@ function getUserData(userid) {
 						value[3].participants,
 						value[4].result,
 						value[5],
-						value[6]
+						value[6],
+						value[7]
 					)
 				);
 			},
@@ -47,7 +49,8 @@ function getUserData(userid) {
 		participants,
 		savings,
 		weekly,
-		monthly
+		monthly,
+		pattern
 	) {
 		return {
 			type: userConstants.LOGIN_SUCCESS,
@@ -58,14 +61,15 @@ function getUserData(userid) {
 			savings,
 			weekly,
 			monthly,
-			loadingState: false
+			pattern,
+			loadingState: false,
 		};
 	}
 	function failure(error) {
 		return {
 			type: userConstants.LOGIN_FAILURE,
 			error,
-			loadingState: false
+			loadingState: false,
 		};
 	}
 }
