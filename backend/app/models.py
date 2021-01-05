@@ -1,7 +1,8 @@
 from app import db
 from datetime import datetime
 import simplejson as json
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.ext.declarative import declarative_base
+
 
 class Users(db.Model):
     __tablename__ = 'users'
@@ -29,6 +30,7 @@ class Users(db.Model):
         backref=db.backref('users', cascade="save-update"), lazy=True)
     participants = db.relationship(
         'Participants', backref=db.backref('users', cascade="save-update"))
+    user_pictures = db.relationship('UserPictures', back_populates="user")
 
     def __repr__(self):
         return f'<Users ID: {self.id}>'
@@ -64,6 +66,39 @@ class Users(db.Model):
             'currency': self.currency,
             'joint': self.joint,
             'joined': self.joined
+        }
+
+class UserPictures(db.Model):
+    __tablename__ = 'user_pictures'
+
+    id = db.Column(db.Integer(), primary_key=True, unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_picture = db.Column(db.String(), nullable=True)
+    user = db.relationship('Users', back_populates="user_pictures")
+
+    def __repr__(self):
+        return f'<UserPictures ID: {self.id}>'
+
+    def __init__(self, user_id, user_picture):
+        self.user_id = user_id
+        self.user_picture = user_picture
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'user_picture': self.user_picture
         }
 
 

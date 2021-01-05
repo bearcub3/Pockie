@@ -9,9 +9,10 @@ from sqlalchemy.sql import extract
 from flask import Flask, request, jsonify, abort, flash, session
 
 from app import app, db
-from app.models import Users, Incomes, Expenses, Goals, Savings, Participants
-from app.auth import AuthError, requires_auth, fetch_jwk_for
+from app.models import Users, Incomes, Expenses, Goals, Savings, Participants, UserPictures
 from utils import drop_everything, get_days, duration_calculation
+from app.images import create_bucket_name, create_bucket, create_temp_file
+
 
 # drop_everything()
 # db.drop_all()
@@ -26,7 +27,6 @@ def index():
 '''
 @user : creation, deletion, reception
 '''
-
 
 @app.route('/api/user', methods=['POST'])
 def user_signup():
@@ -747,6 +747,50 @@ def get_saving_status(user_id):
     }), 200
 
 
+@app.route('/api/user/image', methods=['POST'])
+def post_user_picture():
+    body = request.get_json()
+    user_id = body['user_id']
+    user_picture = body['user_picture']
+
+    user = UserPictures.query.filter(UserPictures.user_id == user_id).one_or_none()
+
+    print(user)
+
+    if user:
+        return jsonify({
+        'success': False,
+        'messages': 'The user has already registered his/her profile picture'
+    }), 200
+
+    if user is None:
+        picture = UserPictures(user_id=user_id, user_picture=user_picture)
+        picture.insert()
+
+        return jsonify({
+            'success': True,
+            'messages': 'new user profile picture is successfully registered.'
+        }), 200
+    return ''
+
+
+@app.route('/api/user/image/<int:user_id>')
+def get_user_picture(user_id):
+    picture = UserPictures.query.filter(UserPictures.user_id==user_id).first()
+
+    if picture is None:
+        abort(404)
+
+    elif picture:
+        return jsonify({
+            'success': True,
+            'user_picture': picture.format()
+        }), 200
+
+    else:
+        abort(500)
+
+
 @app.errorhandler(400)
 def handle_bad_request(error):
     return jsonify({
@@ -799,17 +843,3 @@ def server_error(error):
         'error': 500,
         'message': 'internal server error'
     }), 500
-
-
-'''
-implement error handler for AuthError
-    error handler should conform to general task above
-'''
-
-
-@app.errorhandler(AuthError)
-def handle_auth_error(error):
-    return jsonify({
-        'success': False,
-        'error': error.status_code,
-    }), error.status_code
