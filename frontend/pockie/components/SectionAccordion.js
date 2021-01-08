@@ -12,7 +12,7 @@ import {
 	colorsOfResult,
 	savingPurpose,
 	expenseTypes,
-	incomeTypes
+	incomeTypes,
 } from '../utils/helper';
 
 const ListText = styled.Text`
@@ -23,16 +23,17 @@ const ListText = styled.Text`
 
 class SectionAccordion extends Component {
 	state = {
-		activeSections: [],
+		activeSections: []
 	};
 
 	_renderHeader = (section) => {
+		const { currentIndex } = this.props;
 		return (
 			<View
 				style={{
 					flexDirection: 'row',
 					alignItems: 'center',
-					marginTop: 10,
+					marginTop: 10
 				}}>
 				<View>
 					<StateTitleText size="13">The week's</StateTitleText>
@@ -41,8 +42,8 @@ class SectionAccordion extends Component {
 					</StateTitleText>
 				</View>
 				{decimalPointGenerator(
-					section.total,
-					colorsOfResult(this.props.currentIndex)
+					section.total[currentIndex],
+					colorsOfResult(currentIndex)
 				)}
 			</View>
 		);
@@ -51,13 +52,13 @@ class SectionAccordion extends Component {
 	_renderContent = (section) => {
 		return (
 			<View>
-				{section.content.map((item) => (
+				{section.content.map((item, idx) => (
 					<View
-						key={item.type}
+						key={item.type + `${idx}`}
 						style={{
 							flexDirection: 'row',
 							justifyContent: 'space-between',
-							marginBottom: 10
+							marginBottom: 10,
 						}}>
 						<ListText color={colors.grey1}>{item.type}</ListText>
 						<ListText color={colors.black}>{item.amount}</ListText>
@@ -76,17 +77,17 @@ class SectionAccordion extends Component {
 			case 0:
 				return this.props.purpose.map((item, idx) => ({
 					amount: item.amount,
-					type: expenseTypes[idx].label,
+					type: expenseTypes[item.type].label
 				}));
 			case 1:
 				return this.props.purpose.map((item, idx) => ({
 					amount: item.amount,
-					type: incomeTypes[idx].label
+					type: incomeTypes[item.type].label,
 				}));
 			case 2:
 				return this.props.purpose.map((item, idx) => ({
 					amount: item.amount,
-					type: savingPurpose[idx].label,
+					type: savingPurpose[item.type].label
 				}));
 		}
 	};
@@ -98,8 +99,8 @@ class SectionAccordion extends Component {
 			{
 				title: category,
 				total: totals || 0,
-				content: this._typeGenerator(currentIndex) || 'loading',
-			}
+				content: this._typeGenerator(currentIndex) || 'loading'
+			},
 		];
 
 		return (
@@ -126,7 +127,7 @@ class SectionAccordion extends Component {
 function mapStateToProps(state) {
 	const { weekly } = state.authentication;
 	return {
-		weekly
+		weekly,
 	};
 }
 

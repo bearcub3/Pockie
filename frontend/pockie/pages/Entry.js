@@ -6,7 +6,7 @@ import Layout from '../components/Layout';
 
 const image = {
 	width: 298,
-	height: 210
+	height: 210,
 };
 
 export default function Entry({ navigation }) {
@@ -28,7 +28,7 @@ export default function Entry({ navigation }) {
 				<Button
 					bgcolor={colors.blue2}
 					onPress={() => navigation.navigate('LogIn')}>
-					<ButtonText color={colors.white}>LOG IN</ButtonText>
+					<ButtonText color={colors.white}>START</ButtonText>
 				</Button>
 			</Row>
 		</Layout>

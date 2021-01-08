@@ -223,24 +223,24 @@ function Goals({
 	const dues = savings.map((saving) => saving.due_date);
 	const units = dues.map((due) => Object.keys(due));
 
-	const contents = {
-		purpose: purpose,
-		amount: +amount,
-		unit: unit,
-		period: period,
-		joint_members: joint,
-		user_id: user.id,
-	};
-
-	const postRequestOption = {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(contents)
-	};
-
 	const handlePostGoal = async () => {
+		const contents = {
+			purpose: purpose,
+			amount: +amount,
+			unit: unit,
+			period: period,
+			joint_members: joint,
+			user_id: user.id,
+		};
+
+		const postRequestOption = {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(contents)
+		};
+
 		await fetch(`${API_URL}/api/goals`, postRequestOption)
 			.then((response) => response.json())
 			.then((result) => {
@@ -284,9 +284,7 @@ function Goals({
 					<View style={{ margin: 20 }}>
 						{goals &&
 							goals.map((goal, idx) => (
-								<ScreenLayout
-									key={savingPurpose[idx].label}
-									category="Saving">
+								<ScreenLayout key={goal.id} category="Saving">
 									<PeriodWrapper>
 										<Period>Due in</Period>
 										<Period>
@@ -336,16 +334,25 @@ function Goals({
 											flexDirection: 'row',
 										}}>
 										{goal.joint_members.length > 0 &&
-											goal.joint_members.map(
-												(item, idx) => (
-													<TagBG
-														key={participants[idx]}>
-														<TagText>
-															{participants[
-																idx
-															].nickname.toUpperCase()}
-														</TagText>
-													</TagBG>
+											goal.joint_members.map((item) =>
+												participants.map(
+													(participant) => {
+														if (
+															item ===
+															participant.joint_member_id
+														) {
+															return (
+																<TagBG
+																	key={
+																		participant.nickname
+																	}>
+																	<TagText>
+																		{participant.nickname.toUpperCase()}
+																	</TagText>
+																</TagBG>
+															);
+														}
+													}
 												)
 											)}
 									</View>
@@ -531,7 +538,9 @@ function Goals({
 												}}>
 												<ButtonText
 													color={
-														joint.includes(idx)
+														joint.includes(
+															participant.joint_member_id
+														)
 															? `${colors.blue1}`
 															: `${colors.white}`
 													}>

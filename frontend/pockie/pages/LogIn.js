@@ -7,7 +7,6 @@ import Header from '../components/Header';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Layout from '../components/Layout';
 import Error from '../components/Error';
-
 import { userActions } from '../actions';
 import { signIn } from '@okta/okta-react-native';
 
@@ -34,8 +33,12 @@ class LogIn extends Component {
 			.then((token) => {
 				if (username.includes('a.smith')) {
 					getUser(2);
-				} else {
+				} else if (username.includes('william')) {
 					getUser(1);
+				} else if (username.includes('harry')) {
+					getUser(4);
+				} else {
+					getUser(5);
 				}
 
 				this.setState(
@@ -99,8 +102,8 @@ function mapStateToProps(state) {
 	return { user, finance, loadingState };
 }
 
-const actionCreators = {
-	getUser: userActions.getUserData
-};
+const mapDispatchToProps = (dispatch) => ({
+	getUser: (id) => dispatch(userActions.getUserData(id)),
+});
 
-export default connect(mapStateToProps, actionCreators)(LogIn);
+export default connect(mapStateToProps, mapDispatchToProps)(LogIn);

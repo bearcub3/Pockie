@@ -168,3 +168,11 @@ export const yearlySaving = [
 	{ month: 'Nov', data: 700 },
 	{ month: 'Dec', data: 1000 }
 ];
+
+// https://stackoverflow.com/questions/3108986/gaussian-bankers-rounding-in-javascript
+export function bankersRound(n, d = 2) {
+	var x = n * Math.pow(10, d);
+	var r = Math.round(x);
+	var br = Math.abs(x) % 1 === 0.5 ? (r % 2 === 0 ? r : r - 1) : r;
+	return br / Math.pow(10, d);
+}

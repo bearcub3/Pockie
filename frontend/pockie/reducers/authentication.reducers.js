@@ -10,6 +10,7 @@ const initialState = {
 	weekly: null,
 	monthly: null,
 	pattern: null,
+	picture: undefined,
 	loadingState: false,
 };
 
@@ -27,6 +28,7 @@ export function authentication(state = initialState, action) {
 				weekly: action.weekly,
 				monthly: action.monthly,
 				pattern: action.pattern,
+				picture: action.picture
 			};
 		case userConstants.LOGIN_SUCCESS:
 			return {
@@ -40,6 +42,7 @@ export function authentication(state = initialState, action) {
 				weekly: action.weekly,
 				monthly: action.monthly,
 				pattern: action.pattern,
+				picture: action.picture
 			};
 		case userConstants.LOGIN_FAILURE:
 			return {
@@ -51,8 +54,8 @@ export function authentication(state = initialState, action) {
 			const { goals, savings } = action;
 			return {
 				...state,
-				goals: [...goals],
-				savings: [...savings]
+				goals: goals,
+				savings: savings
 			};
 		case userConstants.UPDATE_GOALS_FAILURE:
 			return {
@@ -64,7 +67,7 @@ export function authentication(state = initialState, action) {
 			const { participants } = action;
 			return {
 				...state,
-				participants: [...participants],
+				participants: participants,
 			};
 		case updateConstants.ADD_SAVING_COMPANION_FAILURE:
 			return {
@@ -92,7 +95,7 @@ export function authentication(state = initialState, action) {
 			const { onlySaving } = action;
 			return {
 				...state,
-				savings: [...onlySaving]
+				savings: onlySaving
 			};
 		case updateConstants.UPDATE_SAVING_FAILURE:
 			return {
@@ -126,5 +129,19 @@ export function authentication(state = initialState, action) {
 			};
 		default:
 			return state;
+
+		case userConstants.USER_PICTURE_REQUEST:
+		case userConstants.USER_PICTURE_SUCCESS:
+			const { picture } = action;
+			return {
+				...state,
+				picture: picture,
+			};
+		case userConstants.USER_PICTURE_FAILURE:
+			return {
+				...state,
+				loadingState: action.loadingState,
+				error: action.error
+			};
 	}
 }

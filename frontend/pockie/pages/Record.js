@@ -9,7 +9,7 @@ import {
 	Row,
 	Label,
 	Button,
-	ButtonText,
+	ButtonText
 } from '../utils/theme';
 
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -101,24 +101,12 @@ const NumberColor = (value) => {
 	}
 };
 
-const dataTypeChecker = (value) => {
-	switch (value) {
-		case 0:
-			return 'expense';
-		case 1:
-			return 'savings';
-		case 2:
-			return 'income';
-		default:
-	}
-};
-
 function Record({
 	user,
 	privateSavingPurpose,
 	jointSavingPurpose,
 	handleSaving,
-	handleToday,
+	handleToday
 }) {
 	const [whichType, setType] = useState(0);
 	const [purposeType, setpurposeType] = useState(null);
@@ -128,80 +116,68 @@ function Record({
 	const [currentPurpose, setPurpose] = useState(expenseTypes);
 	const [isPersonal, setPersonal] = useState(true);
 
-	function listType(value) {
-		switch (value) {
-			case 0:
-				return expenseTypes;
-			case 1:
-				return privateSavingPurpose;
-			case 2:
-				return incomeTypes;
-			default:
-		}
-	}
-
-	useEffect(() => {
-		setData(dataTypeChecker(whichType));
-		setPurpose(listType(whichType));
-		setpurposeType(null);
-		return () => {
-			setData('expense');
-			setPurpose(listType(whichType));
-			setpurposeType(null);
-		};
-	}, [whichType]);
-
 	useEffect(() => {
 		if (amount > 0) {
 			setDisabled(false);
 		}
-		return () => setDisabled(true);
 	}, [amount]);
 
 	const contents = {
 		user_id: user.id,
 		type: purposeType,
-		amount: +amount
+		amount: +amount,
 	};
 
 	const goal = {
 		goal_id: purposeType,
-		amount: +amount,
+		user_id: user.id,
+		amount: +amount
 	};
 
 	const postRequestOption = {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'application/json',
+			'Content-Type': 'application/json'
 		},
-		body: whichType === 1 ? JSON.stringify(goal) : JSON.stringify(contents),
+		body: whichType === 1 ? JSON.stringify(goal) : JSON.stringify(contents)
 	};
 
 	const handleTallying = async () => {
 		await fetch(`${API_URL}/api/${dataType}`, postRequestOption)
 			.then((response) => response.json())
 			.then((result) => {
-				let message;
 				result.success === true
-					? (message = result.messages)
-					: (message = 'There was an error. Try again!');
-				Alert.alert(
-					`Today's ${dataType.toUpperCase()}`,
-					`${message}`,
-					[
-						{
-							text: 'OK',
-							onPress: () => {
-								if (result.success === true) {
-									setType(0);
-									setpurposeType(0);
-									setAmount(0);
+					? Alert.alert(
+							`Today's ${dataType.toUpperCase()}`,
+							`${result.messages}`,
+							[
+								{
+									text: 'OK',
+									onPress: () => {
+										setDisabled(true);
+										setData('expense');
+										setPurpose(expenseTypes);
+										setPersonal(true);
+										setAmount(0);
+										setType(0);
+										setpurposeType(null);
+									}
 								}
-							},
-						},
-					],
-					{ cancelable: false }
-				);
+							],
+							{ cancelable: false }
+					  )
+					: Alert.alert(
+							`Today's ${dataType.toUpperCase()}`,
+							'There was an error. Try again!',
+							[
+								{
+									text: 'OK',
+									onPress: () => console.log('try again')
+								}
+							],
+							{ cancelable: false }
+					  );
+
 				dataType === 'savings'
 					? handleSaving(user.id)
 					: handleToday(user.id);
@@ -214,12 +190,16 @@ function Record({
 	return (
 		<View style={{ flex: 1, marginTop: 60, padding: 30 }}>
 			<Title>How's it going?</Title>
-
 			<TabContainer>
 				<Expense
 					bg={whichType === 0 ? `${colors.blue1}` : `${colors.white}`}
 					underlayColor={`${colors.grey4}`}
-					onPress={() => setType(0)}>
+					onPress={() => {
+						setType(0);
+						setpurposeType(null);
+						setPurpose(expenseTypes);
+						setData('expense');
+					}}>
 					<TabText
 						color={
 							whichType === 0
@@ -232,7 +212,12 @@ function Record({
 				<Saving
 					bg={whichType === 1 ? `${colors.green}` : `${colors.white}`}
 					underlayColor={`${colors.grey4}`}
-					onPress={() => setType(1)}>
+					onPress={() => {
+						setType(1);
+						setpurposeType(null);
+						setPurpose(privateSavingPurpose);
+						setData('savings');
+					}}>
 					<TabText
 						color={
 							whichType === 1
@@ -245,7 +230,12 @@ function Record({
 				<Income
 					bg={whichType === 2 ? `${colors.red}` : `${colors.white}`}
 					underlayColor={`${colors.grey4}`}
-					onPress={() => setType(2)}>
+					onPress={() => {
+						setType(2);
+						setpurposeType(null);
+						setPurpose(incomeTypes);
+						setData('income');
+					}}>
 					<TabText
 						color={
 							whichType === 2
@@ -262,14 +252,14 @@ function Record({
 					marginTop: 30,
 					marginBottom: 30,
 					justifyContent: 'center',
-					alignItems: 'center',
+					alignItems: 'center'
 				}}>
 				<CurrencySymbol color={NumberColor(whichType)}>
 					£
 				</CurrencySymbol>
 				<NumberInput
 					color={NumberColor(whichType)}
-					defaultValue="0"
+					defaultValue={`${amount}`}
 					keyboardType="number-pad"
 					style={{ height: 100 }}
 					onChangeText={(text) => setAmount(text)}
@@ -290,49 +280,69 @@ function Record({
 						style={{
 							backgroundColor: '#fafafa',
 							position: 'absolute',
-							zIndex: 10,
+							zIndex: 10
 						}}
 						itemStyle={{
-							justifyContent: 'flex-start',
+							justifyContent: 'flex-start'
 						}}
 						dropDownStyle={{
-							backgroundColor: `${colors.white}`
+							backgroundColor: `${colors.white}`,
+							height: 120,
 						}}
 						onChangeItem={(item, idx) => setpurposeType(idx)}
 					/>
 				)}
 				{whichType === 1 && (
 					<>
-						<DropDownPicker
-							items={
-								isPersonal
-									? privateSavingPurpose
-									: jointSavingPurpose
-							}
-							defaultValue={purposeType}
-							containerStyle={{ height: 40 }}
-							style={{
-								backgroundColor: '#fafafa',
-								position: 'absolute',
-								zIndex: 15,
-							}}
-							itemStyle={{
-								justifyContent: 'flex-start',
-							}}
-							dropDownStyle={{
-								backgroundColor: `${colors.white}`
-							}}
-							onChangeItem={(item, idx) =>
-								setpurposeType(item.value)
-							}
-						/>
+						{isPersonal ? (
+							<DropDownPicker
+								items={privateSavingPurpose}
+								defaultValue={purposeType}
+								containerStyle={{ height: 40 }}
+								style={{
+									backgroundColor: '#fafafa',
+									position: 'absolute',
+									zIndex: 15
+								}}
+								itemStyle={{
+									justifyContent: 'flex-start'
+								}}
+								dropDownStyle={{
+									backgroundColor: `${colors.white}`,
+								}}
+								onChangeItem={(item, idx) =>
+									setpurposeType(item.value)
+								}
+							/>
+						) : (
+							<DropDownPicker
+								items={jointSavingPurpose}
+								defaultValue={purposeType}
+								containerStyle={{ height: 40 }}
+								style={{
+									backgroundColor: '#fafafa',
+									position: 'absolute',
+									zIndex: 15
+								}}
+								itemStyle={{
+									justifyContent: 'flex-start'
+								}}
+								dropDownStyle={{
+									backgroundColor: `${colors.white}`,
+								}}
+								onChangeItem={(item, idx) =>
+									setpurposeType(item.value)
+								}
+							/>
+						)}
+
 						<Row
 							style={{
 								position: 'absolute',
 								top: 70,
 								zIndex: 10,
 								flexDirection: 'row',
-								alignItems: 'center',
+								alignItems: 'center'
 							}}>
 							<Label style={{ width: '88%' }}>
 								Personal Saving
@@ -342,7 +352,13 @@ function Record({
 								onColor={colors.blue3}
 								offColor={colors.grey2}
 								size="small"
-								onToggle={(isOn) => setPersonal(!isPersonal)}
+								onToggle={(isOn) => {
+									setpurposeType(null);
+									setPersonal(!isPersonal);
+									isPersonal
+										? setPurpose(privateSavingPurpose)
+										: setPurpose(jointSavingPurpose);
+								}}
 							/>
 						</Row>
 					</>
@@ -369,8 +385,8 @@ function mapStateToProps(state) {
 	const privateSavingPurpose = privateSaving.flatMap((saving, idx) => [
 		{
 			label: 'Saving goal: ' + saving.goal_amount,
-			value: saving.goal_id,
-		}
+			value: saving.goal_id
+		},
 	]);
 
 	const jointSaving = savings.filter(
@@ -380,16 +396,24 @@ function mapStateToProps(state) {
 	const jointSavingPurpose = jointSaving.flatMap((saving, idx) => [
 		{
 			label: 'Saving goal: ' + saving.goal_amount,
-			value: saving.goal_id,
-		}
+			value: saving.goal_id
+		},
 	]);
 
 	return { user, privateSavingPurpose, jointSavingPurpose };
 }
 
 const mapDispatchToProps = (dispatch) => ({
-	handleToday: (id) => dispatch(updateActions.updateToday(id)),
-	handleSaving: (id) => dispatch(updateActions.updateSaving(id))
+	handleToday: (id) => {
+		dispatch(updateActions.updateToday(id));
+		dispatch(updateActions.updateWeekly(id));
+		dispatch(updateActions.updateMonthly(id));
+	},
+	handleSaving: (id) => {
+		dispatch(updateActions.updateSaving(id));
+		dispatch(updateActions.updateWeekly(id));
+		dispatch(updateActions.updateMonthly(id));
+	},
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Record);

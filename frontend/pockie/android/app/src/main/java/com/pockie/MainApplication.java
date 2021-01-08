@@ -1,13 +1,13 @@
 package com.pockie;
 
-import com.rnfs.RNFSPackage;
 import com.pockie.generated.BasePackageList;
 
 import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.rnfs.RNFSPackage;
+import org.devio.rn.splashscreen.SplashScreenReactPackage;
+import com.imagepicker.ImagePickerPackage;
 import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
 import com.oktareactnative.OktaSdkBridgePackage;
 import com.oblador.vectoricons.VectorIconsPackage;

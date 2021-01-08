@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import styled from 'emotion-native-extended';
 import { connect } from 'react-redux';
 
@@ -19,7 +19,8 @@ import {
 	weeklyCategories,
 	yearlyIncome,
 	yearlyExpense,
-	yearlySaving
+	yearlySaving,
+	bankersRound
 } from '../utils/helper';
 
 import SubLayout from '../components/SubLayout';
@@ -72,11 +73,11 @@ function States({
 	weekly,
 	monthly,
 	monthlyData,
-	filteredObj,
+	categories,
 	goals,
 }) {
 	const [active, setActive] = useState(0);
-	const [current, setWeek] = useState(weekly.weekly_expense.length - 1);
+	const [current, setWeek] = useState(0);
 	const [totals, setTotal] = useState([]);
 	const [purpose, setPurpose] = useState(null);
 	const [yearly, setYearly] = useState([]);
@@ -84,43 +85,63 @@ function States({
 	const handleActive = (param) => setActive(param);
 
 	useEffect(() => {
-		let totalExpense = 0;
-		let totalIncome = 0;
-		let totalSaving = 0;
+		// getting total amount of each type
+		const test = categories.map((type, idx) => {
+			const categoryWeekly = [];
+			type.map((week, index) => {
+				let weeklyExpense = 0;
+				let weeklyIncome = 0;
+				let weeklySaving = 0;
+				week.map((day) => {
+					switch (idx) {
+						case 0:
+							return (weeklyExpense += +day.amount);
+						case 1:
+							return (weeklyIncome += +day.amount);
+						case 2:
+							return (weeklySaving += +day.amount);
+						default:
+					}
+				});
+				const weeklyTotals = [
+					bankersRound(weeklyExpense, 2),
+					bankersRound(weeklyIncome, 2),
+					bankersRound(weeklySaving, 2)
+				];
+				categoryWeekly.push(weeklyTotals);
+			});
+			return categoryWeekly;
+		});
 
-		filteredObj.map((type, idx) =>
-			type.map((detail) => {
-				switch (idx) {
-					case 0:
-						return (totalExpense += +detail.amount);
-					case 1:
-						return (totalIncome += +detail.amount);
-					case 2:
-						return (totalSaving += +detail.amount);
-					default:
-				}
-			})
-		);
-		setTotal((state) => [totalExpense, totalIncome, totalSaving]);
+		setTotal(test);
+		console.log(totals);
 
-		const details = filteredObj.map((type, idx) =>
-			type.map((detail) => {
-				let dataType = { type: null, amount: 0 };
-				if (idx !== 2) {
-					dataType.type = detail.type;
-					dataType.amount = detail.amount;
-					return dataType;
-				} else {
-					const currentGoal = detail.goal_id;
-					const goalDetail = goals.filter(
-						(goal) => goal.id === currentGoal
-					);
-					dataType.type = goalDetail[0].purpose;
-					dataType.amount = detail.amount;
-					return dataType;
-				}
-			})
+		/**
+		 *  Weekly Detail data manipulation
+		 *  filteredObj(Array) contains 3 arrays of the user's data; weekly espense, saving and income
+		 *  This function creates an Array which contains each user data's details to display them on the collapsible list
+		 */
+		const details = categories.map((type, idx) =>
+			type.map((week) =>
+				week.map((data) => {
+					let dataType = { type: null, amount: 0 };
+					if (idx !== 2) {
+						dataType.type = data.type;
+						dataType.amount = data.amount;
+						return dataType;
+					} else {
+						const currentGoal = data.goal_id;
+						const goalDetail = goals.filter(
+							(goal) => goal.id === currentGoal
+						);
+						dataType.type = goalDetail[0].purpose;
+						dataType.amount = data.amount;
+						return dataType;
+					}
+				})
+			)
 		);
+
 		setPurpose(details);
 
 		const copyExpense = JSON.parse(JSON.stringify(yearlyExpense));
@@ -132,7 +153,7 @@ function States({
 		const expense4Year = ascendingOrder(copyExpense);
 		const income4Year = ascendingOrder(copyIncome);
 		setYearly([expense4Year, income4Year, allSavings.reduce(reducer)]);
-	}, []);
+	}, [categories]);
 
 	return (
 		<SubLayout title="Finance State" prev={navigation}>
@@ -144,13 +165,11 @@ function States({
 					<View
 						style={{
 							marginLeft: 30,
-							marginRight: 30
+							marginRight: 30,
 						}}>
 						<Row
 							style={{
-								alignItems: 'flex-start',
-								position: 'relative',
-								zIndex: 0
+								alignItems: 'flex-start'
 							}}>
 							<YearText color={colors.blue3}>
 								{monthly && monthly.year}
@@ -158,47 +177,56 @@ function States({
 							<MonthText color={colors.blue1}>
 								{monthly && monthly.month}
 							</MonthText>
-							{weeksOfMonth.length > 0 && (
-								<DropDownPicker
-									items={weeksOfMonth}
-									defaultValue={weeksOfMonth[0].value}
-									containerStyle={{
-										height: 40,
-										width: '50%',
-										position: 'relative',
-										top: -65,
-										right: -160,
-										zIndex: 0,
-									}}
-									style={{
-										backgroundColor: '#fafafa',
-										alignSelf: 'flex-end',
-									}}
-									itemStyle={{
-										justifyContent: 'flex-start',
-										paddingLeft: 5,
-									}}
-									dropDownStyle={{
-										backgroundColor: `${colors.white}`
-									}}
-									activeItemStyle={{
-										backgroundColor: `${colors.grey4}`
-									}}
-									onChangeItem={(item, idx) =>
-										setWeek(item.value)
-									}
-								/>
-							)}
-							{purpose &&
-								weeklyCategories.map((category, idx) => (
-									<SectionAccordion
-										key={category}
-										category={category}
-										currentIndex={idx}
-										totals={totals && totals[idx]}
-										purpose={purpose && purpose[idx]}
+							{weeksOfMonth.length > 1 && (
+								<>
+									<DropDownPicker
+										items={weeksOfMonth}
+										defaultValue={weeksOfMonth[0].value}
+										containerStyle={{
+											height: 40,
+											width: '50%',
+											position: 'absolute',
+											top: 10,
+											right: 0,
+										}}
+										style={{
+											backgroundColor: '#fafafa',
+											alignSelf: 'flex-end'
+										}}
+										itemStyle={{
+											justifyContent: 'flex-start',
+											paddingLeft: 5
+										}}
+										dropDownStyle={{
+											backgroundColor: `${colors.white}`,
+										}}
+										activeItemStyle={{
+											backgroundColor: `${colors.grey4}`,
+										}}
+										onChangeItem={(item) =>
+											setWeek(item.value)
+										}
 									/>
-								))}
+									{purpose &&
+										weeklyCategories.map(
+											(category, idx) => (
+												<SectionAccordion
+													key={category}
+													category={category}
+													currentIndex={idx}
+													totals={
+														totals &&
+														totals[idx][current]
+													}
+													purpose={
+														purpose &&
+														purpose[idx][current]
+													}
+												/>
+											)
+										)}
+								</>
+							)}
 						</Row>
 					</View>
 				)}
@@ -206,12 +234,12 @@ function States({
 					<View
 						style={{
 							marginLeft: 30,
-							marginRight: 30
+							marginRight: 30,
 						}}>
 						<Row
 							style={{
 								marginBottom: -5,
-								alignItems: 'center',
+								alignItems: 'center'
 							}}>
 							<YearText color={colors.grey2}>
 								{monthly && monthly.year}
@@ -229,13 +257,13 @@ function States({
 										borderBottomColor: colors.grey2,
 										flexDirection: 'row',
 										marginBottom: 0,
-										marginTop: 10
+										marginTop: 10,
 									}}>
 									<View
 										style={{
 											flexDirection: 'column',
 											width: '25%',
-											justifyContent: 'center',
+											justifyContent: 'center'
 										}}>
 										<StateTitleText size="13">
 											The month's
@@ -249,7 +277,7 @@ function States({
 											width: '75%',
 											flexDirection: 'row',
 											justifyContent: 'flex-end',
-											alignItems: 'center',
+											alignItems: 'center'
 										}}>
 										{decimalPointGenerator(
 											type[1],
@@ -264,13 +292,13 @@ function States({
 					<View
 						style={{
 							marginLeft: 30,
-							marginRight: 30
+							marginRight: 30,
 						}}>
 						<Row
 							style={{
 								marginTop: -30,
 								alignItems: 'center',
-								justifyContent: 'center',
+								justifyContent: 'center'
 							}}>
 							<VictoryChart
 								domainPadding={{ x: 15, y: 10 }}
@@ -278,7 +306,7 @@ function States({
 								animate={{
 									duration: 1000,
 									onLoad: { duration: 500 },
-									easeing: 'elasticInOut',
+									easeing: 'elasticInOut'
 								}}>
 								<VictoryAxis tickFormat={yearlyExpense.month} />
 								<VictoryAxis
@@ -310,7 +338,7 @@ function States({
 								flexDirection: 'row',
 								justifyContent: 'center',
 								alignItems: 'center',
-								marginTop: -15,
+								marginTop: -15
 							}}>
 							<KeyShape color={colors.blue1} />
 							<KeyText>Expense</KeyText>
@@ -328,13 +356,13 @@ function States({
 										borderBottomColor: colors.grey2,
 										flexDirection: 'row',
 										marginBottom: 0,
-										marginTop: 10
+										marginTop: 10,
 									}}>
 									<View
 										style={{
 											flexDirection: 'column',
 											width: '25%',
-											justifyContent: 'center',
+											justifyContent: 'center'
 										}}>
 										<StateTitleText size="13">
 											{idx !== 2
@@ -362,7 +390,7 @@ function States({
 											width: '75%',
 											flexDirection: 'row',
 											justifyContent: 'flex-end',
-											alignItems: 'center',
+											alignItems: 'center'
 										}}>
 										{decimalPointGenerator(
 											type,
@@ -409,12 +437,14 @@ function mapStateToProps(state) {
 		(item, idx) => idx === 1 || idx === 2 || idx === 3
 	);
 
-	const categoriesList = weeklyCategories.map((category, idx) =>
-		weekly[category][0].filter((day) => day[Object.keys(day)[0]] !== null)
+	const categoriesArray = weeklyCategories.map((category, idx) =>
+		weekly[category].map((week, index) =>
+			week.filter((day) => day[Object.keys(day)] !== null)
+		)
 	);
 
-	const filteredObj = categoriesList.map((category, idx) =>
-		category.flatMap((day) => day[Object.keys(day)])
+	const categories = categoriesArray.map((category) =>
+		category.map((week) => week.flatMap((day) => day[Object.keys(day)]))
 	);
 
 	return {
@@ -423,7 +453,7 @@ function mapStateToProps(state) {
 		weekly,
 		monthly,
 		monthlyData,
-		filteredObj,
+		categories,
 		goals
 	};
 }

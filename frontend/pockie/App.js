@@ -19,7 +19,8 @@ import {
 	Roboto_400Regular,
 } from '@expo-google-fonts/dev';
 
-import Splash from './assets/images/pockie-splash.svg';
+import Spinner from 'react-native-loading-spinner-overlay';
+import SplashScreen from 'react-native-splash-screen';
 
 const store = createStore(rootReducer, middlewares);
 
@@ -39,9 +40,9 @@ import Record from './pages/Record';
 import { isAuthenticated } from '@okta/okta-react-native';
 
 const STACKS = {
-	Profile: { title: 'Profile', component: Profile, icon: 'user' },
+	States: { title: 'States', component: States, icon: 'calendar' },
 	Record: { title: 'Record', component: Record, icon: 'plus' },
-	States: { title: 'States', component: States, icon: 'calendar' }
+	Profile: { title: 'Profile', component: Profile, icon: 'user' },
 };
 
 const BottomTab = () => (
@@ -98,6 +99,12 @@ export default function App() {
 	const [progress, setProgress] = useState(false);
 
 	useEffect(() => {
+		if (fontsLoaded) {
+			SplashScreen.hide();
+		}
+	}, [fontsLoaded]);
+
+	useEffect(() => {
 		setProgress(true);
 		async () => {
 			const { auth } = await isAuthenticated();
@@ -128,7 +135,6 @@ export default function App() {
 									path,
 									screens: {}
 								};
-								// console.log(acc);
 								return acc;
 							},
 							{
@@ -141,7 +147,15 @@ export default function App() {
 						)
 					},
 				}}
-				fallback={<Splash />}>
+				fallback={
+					<Spinner
+						overlayColor="rgba(99, 168, 241, 0.7)"
+						textContent={'Loading...'}
+						textStyle={{
+							color: colors.white,
+						}}
+					/>
+				}>
 				<Stack.Navigator initialRouteName="Home" headerMode="screen">
 					{Object.keys(SCREENS).map((name) => (
 						<Stack.Screen

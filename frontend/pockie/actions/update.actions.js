@@ -7,14 +7,14 @@ export const updateActions = {
 	updateToday,
 	updateSaving,
 	updateWeekly,
-	updateMonthly,
+	updateMonthly
 };
 
 function updateGoal(id) {
 	return (dispatch) => {
 		Promise.all([
 			financeService.getGoals(id),
-			financeService.getSavings(id),
+			financeService.getSavings(id)
 		]).then(
 			(value) => {
 				dispatch(success(value[0].goals, value[1].result));
@@ -30,14 +30,14 @@ function updateGoal(id) {
 			type: updateConstants.UPDATE_GOALS,
 			goals,
 			savings,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 	function failure(error) {
 		return {
 			type: updateConstants.UPDATE_GOALS_FAILURE,
 			error,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 }
@@ -58,14 +58,14 @@ function updateParticipant(id) {
 		return {
 			type: updateConstants.ADD_SAVING_COMPANION,
 			participants,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 	function failure(error) {
 		return {
 			type: updateConstants.ADD_SAVING_COMPANION_FAILURE,
 			error,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 }
@@ -86,14 +86,14 @@ function updateToday(userid) {
 		return {
 			type: updateConstants.UPDATE_TODAY,
 			today,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 	function failure(error) {
 		return {
 			type: updateConstants.UPDATE_TODAY_FAILURE,
 			error,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 }
@@ -114,14 +114,14 @@ function updateSaving(userid) {
 		return {
 			type: updateConstants.UPDATE_SAVING,
 			onlySaving,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 	function failure(error) {
 		return {
 			type: updateConstants.UPDATE_SAVING_FAILURE,
 			error,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 }
@@ -142,14 +142,14 @@ function updateWeekly(userid) {
 		return {
 			type: updateConstants.UPDATE_WEEKLY,
 			weekly,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 	function failure(error) {
 		return {
 			type: updateConstants.UPDATE_WEEKLY_FAILURE,
 			error,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 }
@@ -170,46 +170,14 @@ function updateMonthly(userid) {
 		return {
 			type: updateConstants.UPDATE_MONTHLY,
 			monthly,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 	function failure(error) {
 		return {
 			type: updateConstants.UPDATE_MONTHLY_FAILURE,
 			error,
-			loadingState: false,
+			loadingState: false
 		};
 	}
 }
-// function updateUser(userid) {
-// 	return (dispatch) => {
-// 		dispatch(request());
-
-// 		Promise.all([userService.getUser(userid)]).then(
-// 			(value) => {
-// 				dispatch(success(value[0].users));
-// 			},
-// 			(error) => {
-// 				dispatch(failure(error.toString()));
-// 			}
-// 		);
-// 	};
-
-// 	function request() {
-// 		return { type: updateConstants.UPDATE_REQUEST, loadingState: true };
-// 	}
-// 	function success(user) {
-// 		return {
-// 			type: updateConstants.UPDATE_SUCCESS,
-// 			user,
-// 			loadingState: false
-// 		};
-// 	}
-// 	function failure(error) {
-// 		return {
-// 			type: updateConstants.UPDATE_FAILURE,
-// 			error,
-// 			loadingState: false
-// 		};
-// 	}
-// }
