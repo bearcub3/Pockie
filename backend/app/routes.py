@@ -214,8 +214,11 @@ def get_joint_member(user_id):
         my_participants = Participants.query.\
             filter(Participants.user_id == user_id).all()
 
-        if my_participants is None:
-            abort(404)
+        if len(my_participants) == 0:
+            return jsonify({
+                    'success': False,
+                    'message': 'This user does not have any saving partner yet'
+                }), 200
 
         elif len(my_participants) > 0:
             return jsonify({
@@ -225,7 +228,6 @@ def get_joint_member(user_id):
 
     except:
         abort(500)
-
 
 '''
 expense data
@@ -253,7 +255,10 @@ def get_expenditure(user_id):
     expenses = Expenses.query.filter(Expenses.user_id == user_id).all()
 
     if len(expenses) == 0:
-        abort(404)
+        return jsonify({
+                'success': False,
+                'message': 'You do not have any data yet.'
+            }), 200
 
     elif len(expenses) > 0:
         return jsonify({
@@ -278,11 +283,30 @@ def get_today(user_id):
             and_(func.date(Incomes.created) == datetime.utcnow().date(),
                  Incomes.user_id == user_id)).all()
 
-        today_expenses = sum(expense.amount for expense in expenses)
-        today_incomes = sum(income.amount for income in incomes)
+        if expenses and incomes is None:
+            return jsonify({
+                'success': False,
+                'message': 'You do not have any data yet.'
+            }), 200
 
-        result['expenses'] = today_expenses
-        result['incomes'] = today_incomes
+        elif expenses is None:
+            today_incomes = sum(income.amount for income in incomes)
+
+            result['expenses'] = None
+            result['incomes'] = today_incomes
+
+        elif incomes is None:
+            today_expenses = sum(expense.amount for expense in expenses)
+
+            result['expenses'] = today_expenses
+            result['incomes'] = None
+
+        else:
+            today_expenses = sum(expense.amount for expense in expenses)
+            today_incomes = sum(income.amount for income in incomes)
+
+            result['expenses'] = today_expenses
+            result['incomes'] = today_incomes
 
         return jsonify(result), 200
 
@@ -413,15 +437,18 @@ def get_monthly_result(user_id):
 
             monthly_expenses = Expenses.query.\
                 filter(and_(extract('year', Expenses.created) == year,
-                            extract('month', Expenses.created) == month)).all()
+                            extract('month', Expenses.created) == month,
+                            Expenses.user_id == user_id)).all()
 
             monthly_incomes = Incomes.query.\
                 filter(and_(extract('year', Incomes.created) == year,
-                            extract('month', Incomes.created) == month)).all()
+                            extract('month', Incomes.created) == month,
+                            Incomes.user_id == user_id)).all()
 
             monthly_savings = Savings.query.\
                 filter(and_(extract('year', Savings.created) == year,
-                            extract('month', Savings.created) == month)).all()
+                            extract('month', Savings.created) == month,
+                            Savings.user_id == user_id)).all()
 
             result['monthly_expense'] = sum(expense.amount
                                             for expense in monthly_expenses)
@@ -459,7 +486,8 @@ def get_pattern(user_id):
 
             last_month_expenses = Expenses.query.\
                 filter(and_(extract('year', Expenses.created) == year,
-                            extract('month', Expenses.created) == last_month)).all()
+                            extract('month', Expenses.created) == last_month,
+                            Expenses.user_id == user_id)).all()
 
             for expense in last_month_expenses:
                 types['total_expense'] += expense.amount 
@@ -527,7 +555,11 @@ def get_income(user_id):
     incomes = Incomes.query.filter(Incomes.user_id == user_id).all()
 
     if len(incomes) == 0:
-        abort(404)
+        jsonify({
+            'success': False,
+            'messages': 'You do not have any data yet.'
+        }), 200
+        
 
     elif len(incomes) > 0:
         return jsonify({
@@ -595,7 +627,10 @@ def get_goals(user_id):
     goals = Goals.query.filter(Goals.user_id == user_id).all()
 
     if len(goals) == 0:
-        abort(404)
+        return jsonify({
+            'success': False,
+            'messages': 'a user has not set a goal yet'
+        }), 200
 
     elif len(goals) > 0:
         return jsonify({
@@ -695,6 +730,12 @@ def get_saving_status(user_id):
     goals = Goals.query.filter(Goals.user_id == user_id).all()
     result = []
 
+    if goals is None:
+        return jsonify({
+            'success': False,
+            'message': 'There is no goal for the user'
+        }), 200
+
     for goal in goals:
         savings = Savings.query.filter(Savings.goal_id == goal.id).all()
         total = sum(saving.amount for saving in savings)
@@ -771,7 +812,30 @@ def post_user_picture():
             'success': True,
             'messages': 'new user profile picture is successfully registered.'
         }), 200
-    return ''
+
+
+@app.route('/api/user/image', methods=['PATCH'])
+def edit_user_picture():
+    body = request.get_json()
+    user_id = body['user_id']
+    picture = UserPictures.query.filter(UserPictures.user_id == user_id).one_or_none()
+
+    if picture is None:
+        abort(404)
+
+    if picture:
+        try:
+            picture.user_id = user_id,
+            picture.user_picture = body['user_picture']
+            picture.update()
+
+            return jsonify({
+                'success': True,
+                'messages': 'new profile picture is updated.'
+            }), 200
+
+        except:
+            abort(422)
 
 
 @app.route('/api/user/image/<int:user_id>')
@@ -779,7 +843,10 @@ def get_user_picture(user_id):
     picture = UserPictures.query.filter(UserPictures.user_id==user_id).first()
 
     if picture is None:
-        abort(404)
+        return jsonify({
+            'success': False,
+            'user_picture': 'The user has not registered a profile picture'
+        }), 200
 
     elif picture:
         return jsonify({
