@@ -1,14 +1,17 @@
 ## POCKIE
 
-fullstack mobile application
+Fullstack Mobile Application
 
-```
-backend
-python, flask, postgresql, sqlachemy
-
-frontend
-react native, emotion, expo
-```
-
-
-heroku addons:open auth0
+|          | Tech Stacks     |
+|----------|-----------------|
+|backend   | python          |
+|          | flask           |
+|          | sqlalchemy      |
+|          | postgresql      |
+|          | psql            |
+|          | Boto3(aws s3)   |
+|          | okta            |
+|frontend  | react-native            |
+|          | Redux            |
+|          | victory-native           |
+|          | yarn            |
