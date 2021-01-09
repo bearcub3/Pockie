@@ -5,32 +5,12 @@
 1. Learning Basic Database modelling with Postgres & SQLAlchemy
 2. CRUD operation for Database using Flask Routes
 3. API Automated unit test
-4. Authorization and Authentication using JWT Token
-5. API deployment on Heroku
+4. API deployment on Heroku
 
 ## API Documentation
 
 [POSTMAN API](https://documenter.getpostman.com/view/8407217/TVmTca9m)    
-
-Access Token is temporarily saved for a Udacity reviewer.
-
-
-## Roles & Permissions
-
-### Super
-
-1. read:users - getting all users' data
-2. delete:user - delete a user's data
-
-### Basic
-
-1. read:user - getting a user's own data
-2. edit:user - editing a user's own daa
-3. delete:user - delete a user's data
-
-**Regular User can sign up to join**    
-
-1. post:user - signing up
+All the details of each entry point can be found from the link above.
 
 
 ## Installation
@@ -59,7 +39,7 @@ flask run
 
 ---
 
-## CLI
+## heroku API server
 
 [stage](https://pockie-app-stage.herokuapp.com/)
 
